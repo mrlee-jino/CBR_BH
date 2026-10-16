@@ -129,7 +129,7 @@ Inspect the listing, photos, private address, ownership/contact evidence, and un
 
 ## 6. UI/UX direction
 
-Use a calm, practical local-market style: teal primary actions, warm neutral surfaces, charcoal text, readable system/sans typography, and real property photography. Prefer clear information density to decorative dashboard widgets. All listings show monthly price, barangay, unit type, key amenities, and honest availability.
+Use the founder's chosen light purple palette: lavender surfaces, plum text, violet primary actions, and warm cream accents. Use readable system/sans typography and real property photography when real listings are available; the initial sample-data preview uses clearly identified original illustrations. Prefer clear information density to decorative dashboard widgets. All listings show monthly price, barangay, unit type, key amenities, and honest availability.
 
 - Mobile: one-column cards, persistent search, filter sheet, list/map toggle, and a property-page request bar that does not cover content.
 - Desktop: two-column search/map view; owner/admin sidebars; consistent page headers and action placement.

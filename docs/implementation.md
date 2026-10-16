@@ -1,8 +1,10 @@
 # Build, test, and deployment plan
 
-The architecture is designed; the app is not built yet. Work through these milestones in order and keep each commit runnable. Required validation includes production builds, real RLS tests, simultaneous booking approval tests, and a browser journey. Formatting alone does not demonstrate readiness.
+Milestone 1's public discovery UI is implemented with clearly labeled fixtures and the founder's light purple theme. The remaining milestones are a roadmap, not implemented capabilities. Work through them in order and keep each commit runnable. Required validation for the complete MVP includes production builds, real RLS tests, simultaneous booking approval tests, and a browser journey. Formatting alone does not demonstrate readiness.
 
 ## 1. Scaffold the application and design system
+
+Current implementation includes the landing page, search/filter results, six property-detail routes, shared layout/cards/forms, an accessible request-explanation dialog, original SVG illustrations, loading/error/not-found states, and the preview information page. Authentication, owner dashboards, live maps, uploads, and backend functionality remain for later milestones. Sample pages are deliberately excluded from search indexing.
 
 Working directory: `/workspace/CBR_BH`. Keep this checkout. Use a supported Node.js LTS runtime (Node 24 is a suitable initial target), pin the exact selected runtime and package manager, and commit the generated lockfile. Choose supported compatible stable versions of Next.js App Router, React, TypeScript, Tailwind, Supabase JS/SSR, Leaflet/React Leaflet, Zod, and accessible UI primitives during scaffolding. Avoid an ORM initially; use Supabase's generated SQL types.
 
