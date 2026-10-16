@@ -1,6 +1,6 @@
 # Build, test, and deployment plan
 
-Milestone 1's public discovery UI is implemented with clearly labeled fixtures and the founder's light purple theme. The remaining milestones are a roadmap, not implemented capabilities. Work through them in order and keep each commit runnable. Required validation for the complete MVP includes production builds, real RLS tests, simultaneous booking approval tests, and a browser journey. Formatting alone does not demonstrate readiness.
+Milestone 1's discovery UI and the schema/auth foundation from milestones 2–3 are implemented and tested locally. Hosted schema application and Auth settings require the operator steps in [Supabase setup](supabase-setup.md). Owner/admin listing screens, photo processing, real public inventory, and booking UI remain a roadmap. Keep each commit runnable. Full-MVP validation includes production builds, real RLS tests, simultaneous booking approval tests, and browser journeys; formatting alone does not demonstrate readiness.
 
 ## 1. Scaffold the application and design system
 

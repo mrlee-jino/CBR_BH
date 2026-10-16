@@ -1,6 +1,6 @@
 # Database and authorization design
 
-This is a schema specification, not an applied migration. Translate it into reviewed Supabase migrations during implementation milestone 2, then validate it against local PostgreSQL and real authenticated clients. No RLS policy or booking function is implemented by this document.
+The core schema, RLS, role/account functions, and booking/viewing RPCs are now implemented in `supabase/migrations/` and validated against local PostgreSQL, Auth, and PostgREST. Hosted application is a separate operator step; see [Supabase setup](supabase-setup.md). This document remains the architecture specification, including planned photo/publication UI and later refinements. The actual migrations are authoritative for current function names/signatures.
 
 ## 1. Modeling rules
 
@@ -130,7 +130,7 @@ Additional controlled functions:
 - `submit_viewing`, `decide_viewing`, `withdraw_viewing`: participant checks, future time validation, consent, state checks. No allocation writes.
 - `activate_owner`, `save_property_draft`, `save_unit`, `submit_property`, `moderate_property`, `suspend_account`: explicit field allowlists and transitions. Admin status/verification cannot be supplied through owner payloads.
 
-These names are planned RPC interfaces, not available functions yet. Return predictable codes such as `FORBIDDEN`, `INVALID_STATE`, `REQUEST_EXPIRED`, `OFFER_CHANGED`, and `UNIT_UNAVAILABLE`; do not expose raw SQL or whether another renter exists.
+The migration implements these behaviors through `submit_booking`, `approve_booking`, `decide_booking` (withdraw/reject/cancel), `create_manual_allocation`, `end_allocation`, `release_future_block`, and the viewing/account/property RPCs. See generated database types for exact signatures. Return predictable codes such as `FORBIDDEN`, `INVALID_STATE`, `REQUEST_EXPIRED`, `OFFER_CHANGED`, and `UNIT_UNAVAILABLE`; do not expose raw SQL or whether another renter exists.
 
 ## 5. RLS and database privileges
 

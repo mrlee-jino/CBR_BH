@@ -27,8 +27,9 @@ export default function PreviewPage() {
           </p>
           <p>
             Every listing, price, and unit is sample data. All artwork is illustrative. There are no
-            real owners, verified listings, live vacancies, accounts, saved favorites, bookings,
-            payments, or contact collection in this milestone.
+            real owners behind these listings, verified properties, live vacancies, saved favorites,
+            bookings, or payments. Account signup and private profile settings are real and store
+            your details in Supabase; discovery continues to use sample listings.
           </p>
           <Link href="/properties" className="text-link">
             Explore the sample rentals <ArrowRight size={17} aria-hidden="true" />
@@ -38,8 +39,8 @@ export default function PreviewPage() {
           <Sprout size={29} strokeWidth={1.4} aria-hidden="true" />
           <h2>What comes next</h2>
           <p>
-            Secure accounts and a Supabase database, followed by owner listings, admin review,
-            viewing requests, and booking confirmations that prevent overlapping reservations.
+            Owner listing screens, photo processing, admin review screens, viewing requests, and
+            booking interfaces will build on the schema and account foundation.
           </p>
           <p>
             A pending request won’t reserve a unit. Only an owner-approved booking will hold it.
@@ -56,8 +57,8 @@ export default function PreviewPage() {
               before publication.
             </p>
             <p>
-              Owner registration and listing submissions aren’t open yet. This page does not collect
-              your contact information or add you to a waitlist.
+              Verified account holders can activate owner access now. Listing submission screens
+              aren’t open yet. This information page does not add you to a waitlist.
             </p>
           </div>
         </section>

@@ -45,8 +45,8 @@ export function SiteHeader() {
               </Link>
             ))}
           </nav>
-          <Link className="button button-small header-cta" href="/properties">
-            Explore rentals <ArrowUpRight size={16} aria-hidden="true" />
+          <Link className="button button-small header-cta" href="/dashboard">
+            Your account <ArrowUpRight size={16} aria-hidden="true" />
           </Link>
           <button
             type="button"
@@ -73,6 +73,9 @@ export function SiteHeader() {
             ))}
             <Link href="/preview" onClick={() => setOpen(false)}>
               About this preview
+            </Link>
+            <Link href="/dashboard" onClick={() => setOpen(false)}>
+              Your account / sign in
             </Link>
           </nav>
         )}

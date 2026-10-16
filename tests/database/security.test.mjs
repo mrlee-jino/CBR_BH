@@ -1,0 +1,633 @@
+import { before, after, test } from "node:test";
+import assert from "node:assert/strict";
+import { randomUUID, createHmac } from "node:crypto";
+import { readFileSync } from "node:fs";
+import pg from "pg";
+import { createClient } from "@supabase/supabase-js";
+import { localTestEnv } from "../../scripts/test-env.mjs";
+
+const env = localTestEnv();
+const options = { auth: { persistSession: false, autoRefreshToken: false } };
+const root = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.TEST_SUPABASE_SERVICE_KEY, options);
+const anon = createClient(
+  env.NEXT_PUBLIC_SUPABASE_URL,
+  env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  options,
+);
+const db = new pg.Client({ connectionString: env.TEST_DATABASE_URL });
+const users = {};
+let property, unit, bed;
+const password = `Puyo-local-${randomUUID()}!`;
+const nextMonth = new Date(Date.now() + 35 * 86400000).toISOString().slice(0, 10);
+const later = new Date(Date.now() + 65 * 86400000).toISOString().slice(0, 10);
+const afterLater = new Date(Date.now() + 95 * 86400000).toISOString().slice(0, 10);
+function ok(response) {
+  assert.equal(response.error, null, response.error?.message);
+  return response.data;
+}
+function denied(response) {
+  assert.ok(response.error, "Operation should be forbidden");
+}
+function totp(secret) {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  let bits = "";
+  for (const char of secret.toUpperCase().replace(/=+$/, ""))
+    bits += alphabet.indexOf(char).toString(2).padStart(5, "0");
+  const bytes = [];
+  for (let i = 0; i + 8 <= bits.length; i += 8) bytes.push(parseInt(bits.slice(i, i + 8), 2));
+  const counter = Buffer.alloc(8);
+  counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 30000)));
+  const hash = createHmac("sha1", Buffer.from(bytes)).update(counter).digest();
+  const offset = hash[19] & 15;
+  return ((hash.readUInt32BE(offset) & 0x7fffffff) % 1000000).toString().padStart(6, "0");
+}
+async function request(
+  client,
+  target = unit,
+  start = nextMonth,
+  end = later,
+  key = randomUUID(),
+  version = 1,
+) {
+  return client.rpc("submit_booking", {
+    p_unit_id: target,
+    p_start_date: start,
+    p_end_date: end,
+    p_offer_version: version,
+    p_message: "Local test request",
+    p_consent: true,
+    p_idempotency_key: key,
+  });
+}
+async function published(owner, label) {
+  const id = ok(
+    await owner.rpc("save_property_draft", {
+      p_property_id: null,
+      p_title: label,
+      p_slug: `test-${randomUUID()}`,
+      p_property_type: "boarding_house",
+      p_barangay: "Caasinan",
+      p_description: "Local test only",
+      p_street_address: "Private test address",
+      p_contact_name: "Local Owner",
+      p_contact_phone: "09123456789",
+    }),
+  );
+  const target = ok(
+    await owner.rpc("save_unit", {
+      p_property_id: id,
+      p_unit_id: null,
+      p_label: "Room A · Bed 1",
+      p_unit_type: "bedspace",
+      p_monthly_rent: 2000,
+      p_deposit_amount: 2000,
+      p_terms: "Local terms",
+    }),
+  );
+  ok(await owner.rpc("submit_property", { p_property_id: id }));
+  ok(
+    await users.admin.client.rpc("moderate_property", {
+      p_property_id: id,
+      p_decision: "published",
+      p_reason: "Local reviewed fixture",
+    }),
+  );
+  return { id, unit: target };
+}
+
+before(async () => {
+  await db.connect();
+  for (const name of ["renterA", "renterB", "ownerA", "ownerB", "admin", "unverified"]) {
+    const email = `puyo-db-${name}-${randomUUID()}@example.test`;
+    const user = ok(
+      await root.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: name !== "unverified",
+        user_metadata: { display_name: name, role: "admin" },
+      }),
+    ).user;
+    const client = createClient(
+      env.NEXT_PUBLIC_SUPABASE_URL,
+      env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+      options,
+    );
+    if (name !== "unverified") ok(await client.auth.signInWithPassword({ email, password }));
+    users[name] = { id: user.id, client, email };
+  }
+  await db.query("insert into public.account_roles(user_id,role) values($1,'admin')", [
+    users.admin.id,
+  ]);
+  const factor = ok(
+    await users.admin.client.auth.mfa.enroll({ factorType: "totp", friendlyName: "Database test" }),
+  );
+  ok(
+    await users.admin.client.auth.mfa.challengeAndVerify({
+      factorId: factor.id,
+      code: totp(factor.totp.secret),
+    }),
+  );
+  ok(await users.ownerA.client.rpc("activate_owner"));
+  ok(await users.ownerB.client.rpc("activate_owner"));
+  ({ id: property, unit } = await published(users.ownerA.client, "Local public fixture"));
+  ({ unit: bed } = await published(users.ownerA.client, "Separate bed fixture"));
+});
+after(async () => {
+  await db.end();
+});
+
+test("signup never trusts user metadata for roles; own profiles are private", async () => {
+  assert.deepEqual(
+    ok(await users.renterA.client.from("account_roles").select("role")).map((row) => row.role),
+    ["renter"],
+  );
+  assert.equal(ok(await users.renterA.client.from("profiles").select("id")).length, 1);
+  assert.equal(
+    ok(await users.renterB.client.from("profiles").select("id").eq("id", users.renterA.id)).length,
+    0,
+  );
+  denied(await anon.from("profiles").select("*"));
+  denied(
+    await users.renterA.client
+      .from("account_roles")
+      .insert({ user_id: users.renterA.id, role: "admin" }),
+  );
+  denied(
+    await users.renterA.client
+      .from("profiles")
+      .update({ account_status: "active" })
+      .eq("id", users.renterA.id),
+  );
+});
+test("profile updates and idempotent owner activation have explicit field boundaries", async () => {
+  ok(
+    await users.renterA.client.rpc("update_my_profile", {
+      p_display_name: "Renter A",
+      p_phone: "09123456789",
+    }),
+  );
+  assert.equal(
+    ok(await users.renterA.client.from("profile_contacts").select("phone").single()).phone,
+    "09123456789",
+  );
+  denied(
+    await users.renterB.client
+      .from("profile_contacts")
+      .update({ phone: "09123456789" })
+      .eq("user_id", users.renterA.id),
+  );
+  ok(await users.ownerA.client.rpc("activate_owner"));
+  assert.equal(
+    ok(await users.ownerA.client.from("account_roles").select("role").eq("role", "owner")).length,
+    1,
+  );
+  denied(await anon.rpc("activate_owner"));
+});
+test("public browsing exposes only published projections, not base or private rows", async () => {
+  const rows = ok(await anon.rpc("browse_properties"));
+  assert.ok(rows.some((row) => row.id === property));
+  for (const row of rows) {
+    assert.equal(row.owner_id, undefined);
+    assert.equal(row.street_address, undefined);
+    assert.equal(row.verified_by, undefined);
+  }
+  denied(await anon.from("properties").select("*"));
+  denied(await anon.from("property_private_details").select("*"));
+  assert.equal(
+    ok(await users.ownerB.client.from("properties").select("id").eq("id", property)).length,
+    0,
+  );
+  denied(
+    await users.ownerB.client.rpc("save_unit", {
+      p_property_id: property,
+      p_unit_id: unit,
+      p_label: "Hijack",
+      p_unit_type: "bedspace",
+      p_monthly_rent: 1,
+      p_deposit_amount: 0,
+      p_terms: "",
+    }),
+  );
+});
+test("admin requires database role plus MFA; ordinary JWT metadata cannot moderate", async () => {
+  denied(
+    await users.renterA.client.rpc("moderate_property", {
+      p_property_id: property,
+      p_decision: "suspended",
+      p_reason: "Forged",
+    }),
+  );
+  const weakAdmin = createClient(
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    options,
+  );
+  ok(await weakAdmin.auth.signInWithPassword({ email: users.admin.email, password }));
+  assert.equal(ok(await weakAdmin.from("audit_events").select("id")).length, 0);
+  denied(
+    await weakAdmin.rpc("suspend_account", {
+      p_user_id: users.renterA.id,
+      p_suspended: true,
+      p_reason: "Must require MFA",
+    }),
+  );
+  denied(
+    await users.ownerA.client
+      .from("properties")
+      .update({ status: "published", verified_by: users.ownerA.id })
+      .eq("id", property),
+  );
+});
+test("favorites are scoped to the caller and published properties", async () => {
+  ok(
+    await users.renterA.client
+      .from("favorites")
+      .insert({ user_id: users.renterA.id, property_id: property }),
+  );
+  assert.equal(ok(await users.renterB.client.from("favorites").select("*")).length, 0);
+  denied(
+    await users.renterB.client
+      .from("favorites")
+      .insert({ user_id: users.renterA.id, property_id: property }),
+  );
+  ok(await users.renterA.client.from("favorites").delete().eq("property_id", property));
+});
+test("concurrent overlapping approvals confirm exactly one request and retain the loser pending", async () => {
+  const a = ok(await request(users.renterA.client));
+  const b = ok(await request(users.renterB.client));
+  const approvals = await Promise.all([
+    users.ownerA.client.rpc("approve_booking", { p_request_id: a }),
+    users.ownerA.client.rpc("approve_booking", { p_request_id: b }),
+  ]);
+  assert.equal(approvals.filter((result) => !result.error).length, 1);
+  assert.ok(approvals.find((result) => result.error).error.message.includes("UNIT_UNAVAILABLE"));
+  const records = ok(
+    await users.ownerA.client.from("booking_requests").select("id,status").in("id", [a, b]),
+  );
+  assert.equal(records.filter((row) => row.status === "approved").length, 1);
+  assert.equal(records.filter((row) => row.status === "pending").length, 1);
+  const winner = records.find((row) => row.status === "approved").id;
+  const firstAllocation = ok(approvals.find((result) => !result.error));
+  assert.equal(
+    ok(await users.ownerA.client.rpc("approve_booking", { p_request_id: winner })),
+    firstAllocation,
+  );
+  const loser = records.find((row) => row.status === "pending").id;
+  denied(await users.ownerB.client.rpc("approve_booking", { p_request_id: loser }));
+  ok(
+    await users.ownerA.client.rpc("decide_booking", {
+      p_request_id: winner,
+      p_decision: "cancelled",
+      p_reason: "Test cancellation",
+    }),
+  );
+  ok(await users.ownerA.client.rpc("approve_booking", { p_request_id: loser }));
+  ok(
+    await users.ownerA.client.rpc("decide_booking", {
+      p_request_id: loser,
+      p_decision: "cancelled",
+      p_reason: "Test cleanup",
+    }),
+  );
+});
+test("request replay is idempotent; consent, dates, owner self-booking, and raw writes are guarded", async () => {
+  const key = randomUUID();
+  const first = ok(await request(users.renterA.client, bed, nextMonth, later, key));
+  assert.equal(ok(await request(users.renterA.client, bed, nextMonth, later, key)), first);
+  denied(
+    await users.renterA.client
+      .from("booking_requests")
+      .update({ status: "approved" })
+      .eq("id", first),
+  );
+  assert.equal(ok(await users.renterB.client.from("unit_allocations").select("*")).length, 0);
+  denied(await request(users.ownerA.client, bed));
+  denied(await request(users.renterB.client, bed, later, nextMonth));
+  denied(
+    await users.renterB.client.rpc("submit_booking", {
+      p_unit_id: bed,
+      p_start_date: nextMonth,
+      p_end_date: later,
+      p_offer_version: 1,
+      p_message: "",
+      p_consent: false,
+      p_idempotency_key: randomUUID(),
+    }),
+  );
+  ok(
+    await users.renterA.client.rpc("decide_booking", {
+      p_request_id: first,
+      p_decision: "withdrawn",
+      p_reason: "",
+    }),
+  );
+});
+test("adjacent allocations and separate bedspaces succeed; indefinite occupancy and blocks prevent overlap", async () => {
+  const first = ok(
+    await users.ownerA.client.rpc("create_manual_allocation", {
+      p_unit_id: bed,
+      p_start_date: nextMonth,
+      p_end_date: later,
+      p_kind: "manual_occupancy",
+      p_note: "",
+    }),
+  );
+  ok(
+    await users.ownerA.client.rpc("create_manual_allocation", {
+      p_unit_id: bed,
+      p_start_date: later,
+      p_end_date: afterLater,
+      p_kind: "blocked",
+      p_note: "",
+    }),
+  );
+  denied(await request(users.renterA.client, bed, nextMonth, later));
+  assert.equal(
+    ok(
+      await anon.rpc("unit_is_available", {
+        p_unit_id: bed,
+        p_start_date: nextMonth,
+        p_end_date: later,
+      }),
+    ),
+    false,
+  );
+  const other = await published(users.ownerA.client, "Indefinite fixture");
+  ok(
+    await users.ownerA.client.rpc("create_manual_allocation", {
+      p_unit_id: other.unit,
+      p_start_date: nextMonth,
+      p_end_date: null,
+      p_kind: "manual_occupancy",
+      p_note: "",
+    }),
+  );
+  denied(await request(users.renterB.client, other.unit, afterLater, null));
+  ok(
+    await users.ownerA.client.rpc("end_allocation", { p_allocation_id: first, p_end_date: later }),
+  );
+  assert.equal(
+    ok(
+      await users.ownerA.client
+        .from("unit_allocations")
+        .select("released_at")
+        .eq("id", first)
+        .single(),
+    ).released_at,
+    null,
+  );
+});
+test("editing an offer pauses the listing, and stale offers cannot be approved after re-review", async () => {
+  const target = await published(users.ownerA.client, "Offer change fixture");
+  const booking = ok(await request(users.renterA.client, target.unit));
+  ok(
+    await users.ownerA.client.rpc("save_unit", {
+      p_property_id: target.id,
+      p_unit_id: target.unit,
+      p_label: "Room A · Bed 1",
+      p_unit_type: "bedspace",
+      p_monthly_rent: 2400,
+      p_deposit_amount: 2400,
+      p_terms: "New terms",
+    }),
+  );
+  assert.ok(!ok(await anon.rpc("browse_properties")).some((row) => row.id === target.id));
+  denied(await users.ownerA.client.rpc("approve_booking", { p_request_id: booking }));
+  ok(await users.ownerA.client.rpc("submit_property", { p_property_id: target.id }));
+  ok(
+    await users.admin.client.rpc("moderate_property", {
+      p_property_id: target.id,
+      p_decision: "published",
+      p_reason: "Re-reviewed",
+    }),
+  );
+  const result = await users.ownerA.client.rpc("approve_booking", { p_request_id: booking });
+  denied(result);
+  assert.match(result.error.message, /OFFER_CHANGED/);
+});
+test("contact disclosure is consented, participant-only, and withdrawn after cancellation", async () => {
+  const target = await published(users.ownerA.client, "Contact fixture");
+  denied(await users.renterA.client.rpc("get_property_contact", { p_property_id: target.id }));
+  const booking = ok(await request(users.renterA.client, target.unit));
+  assert.equal(
+    ok(
+      await users.ownerA.client.rpc("get_requester_contact", {
+        p_request_id: booking,
+        p_kind: "booking",
+      }),
+    )[0].phone,
+    "09123456789",
+  );
+  denied(
+    await users.ownerB.client.rpc("get_requester_contact", {
+      p_request_id: booking,
+      p_kind: "booking",
+    }),
+  );
+  ok(await users.ownerA.client.rpc("approve_booking", { p_request_id: booking }));
+  assert.equal(
+    ok(await users.renterA.client.rpc("get_property_contact", { p_property_id: target.id }))[0]
+      .street_address,
+    "Private test address",
+  );
+  denied(await users.renterB.client.rpc("get_property_contact", { p_property_id: target.id }));
+  ok(
+    await users.renterA.client.rpc("decide_booking", {
+      p_request_id: booking,
+      p_decision: "cancelled",
+      p_reason: "Changed plans",
+    }),
+  );
+  denied(await users.renterA.client.rpc("get_property_contact", { p_property_id: target.id }));
+});
+test("suspension immediately blocks mutations and removes public owner listings with existing sessions", async () => {
+  const target = await published(users.ownerB.client, "Suspension fixture");
+  ok(
+    await users.admin.client.rpc("suspend_account", {
+      p_user_id: users.ownerB.id,
+      p_suspended: true,
+      p_reason: "Local test suspension",
+    }),
+  );
+  denied(await users.ownerB.client.rpc("activate_owner"));
+  assert.ok(!ok(await anon.rpc("browse_properties")).some((row) => row.id === target.id));
+  denied(await request(users.renterB.client, target.unit));
+  ok(
+    await users.admin.client.rpc("suspend_account", {
+      p_user_id: users.ownerB.id,
+      p_suspended: false,
+      p_reason: "Local test restore",
+    }),
+  );
+});
+test("all application tables have RLS; private helpers and uploads are inaccessible", async () => {
+  const tables = await db.query(
+    "select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and not c.relrowsecurity",
+  );
+  assert.deepEqual(tables.rows, []);
+  const bypass = await db.query(
+    "select has_function_privilege('authenticated','private.require_account()','execute') as allowed",
+  );
+  assert.equal(bypass.rows[0].allowed, false);
+  denied(
+    await users.renterA.client.storage
+      .from("property-photos")
+      .upload(`${users.renterA.id}/${property}/invalid.jpg`, new Uint8Array([1, 2, 3]), {
+        contentType: "image/jpeg",
+      }),
+  );
+});
+
+test("viewing decisions disclose the address only to participants and never reserve inventory", async () => {
+  const target = await published(users.ownerA.client, "Viewing fixture");
+  const viewing = ok(
+    await users.renterA.client.rpc("submit_viewing", {
+      p_property_id: target.id,
+      p_requested_at: new Date(Date.now() + 86400000).toISOString(),
+      p_message: "Local viewing",
+      p_consent: true,
+    }),
+  );
+  denied(
+    await users.ownerB.client.rpc("decide_viewing", {
+      p_request_id: viewing,
+      p_decision: "accepted",
+      p_reason: "",
+    }),
+  );
+  denied(await users.renterA.client.rpc("get_property_contact", { p_property_id: target.id }));
+  ok(
+    await users.ownerA.client.rpc("decide_viewing", {
+      p_request_id: viewing,
+      p_decision: "accepted",
+      p_reason: "Confirmed time",
+    }),
+  );
+  assert.equal(
+    ok(await users.renterA.client.rpc("get_property_contact", { p_property_id: target.id })).length,
+    1,
+  );
+  assert.equal(
+    ok(await users.ownerA.client.from("unit_allocations").select("id").eq("unit_id", target.unit))
+      .length,
+    0,
+  );
+  ok(
+    await users.renterA.client.rpc("decide_viewing", {
+      p_request_id: viewing,
+      p_decision: "cancelled",
+      p_reason: "New plan",
+    }),
+  );
+  denied(await users.renterA.client.rpc("get_property_contact", { p_property_id: target.id }));
+});
+
+test("expired pending requests cannot be approved or expose contacts and can be replaced", async () => {
+  const target = await published(users.ownerA.client, "Expiry fixture");
+  const booking = ok(await request(users.renterA.client, target.unit));
+  await db.query(
+    "update public.booking_requests set expires_at=now()-interval '1 minute' where id=$1",
+    [booking],
+  );
+  denied(
+    await users.ownerA.client.rpc("get_requester_contact", {
+      p_request_id: booking,
+      p_kind: "booking",
+    }),
+  );
+  const decision = await users.ownerA.client.rpc("approve_booking", { p_request_id: booking });
+  denied(decision);
+  assert.match(decision.error.message, /REQUEST_EXPIRED/);
+  const replacement = ok(await request(users.renterA.client, target.unit));
+  assert.notEqual(replacement, booking);
+  await assert.rejects(
+    db.query("update public.booking_requests set status='approved' where id=$1", [replacement]),
+    /INVALID_BOOKING_ALLOCATION/,
+  );
+});
+
+test("reports are private to the reporter/admin, and future blocks can only be released by their owner", async () => {
+  const target = await published(users.ownerA.client, "Report fixture");
+  const report = ok(
+    await users.renterA.client.rpc("submit_report", {
+      p_property_id: target.id,
+      p_reason: "Sample concern",
+      p_detail: "Local test",
+    }),
+  );
+  assert.equal(
+    ok(await users.ownerA.client.from("reports").select("id").eq("id", report)).length,
+    0,
+  );
+  denied(
+    await users.ownerA.client.rpc("resolve_report", { p_report_id: report, p_status: "dismissed" }),
+  );
+  ok(await users.admin.client.rpc("resolve_report", { p_report_id: report, p_status: "resolved" }));
+  const block = ok(
+    await users.ownerA.client.rpc("create_manual_allocation", {
+      p_unit_id: target.unit,
+      p_start_date: nextMonth,
+      p_end_date: later,
+      p_kind: "blocked",
+      p_note: "",
+    }),
+  );
+  denied(await users.ownerB.client.rpc("release_future_block", { p_allocation_id: block }));
+  ok(await users.ownerA.client.rpc("release_future_block", { p_allocation_id: block }));
+  assert.equal(
+    ok(
+      await anon.rpc("unit_is_available", {
+        p_unit_id: target.unit,
+        p_start_date: nextMonth,
+        p_end_date: later,
+      }),
+    ),
+    true,
+  );
+});
+
+test("SQL Editor bundle bootstraps a fresh app schema and records migration versions atomically", async () => {
+  const source = readFileSync("supabase/bootstrap.sql", "utf8");
+  const sql = source.slice(source.indexOf("begin;\n") + 7, source.lastIndexOf("commit;"));
+  await db.query("begin");
+  try {
+    await db.query(
+      "drop policy if exists puyohub_photos_closed on storage.objects; drop schema public cascade; drop schema private cascade; create schema public; grant usage on schema public to anon,authenticated,service_role; delete from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300')",
+    );
+    await db.query(sql);
+    const result = await db.query(
+      "select count(*)::int as count from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300')",
+    );
+    assert.equal(result.rows[0].count, 3);
+    const profiles = await db.query("select count(*)::int as count from public.profiles");
+    assert.ok(profiles.rows[0].count >= 6, "Existing Auth accounts should be backfilled safely");
+  } finally {
+    await db.query("rollback");
+  }
+});
+
+test("revoking an owner role immediately removes ownership access for an existing session", async () => {
+  await db.query("delete from public.account_roles where user_id=$1 and role='owner'", [
+    users.ownerB.id,
+  ]);
+  try {
+    assert.equal(ok(await users.ownerB.client.from("properties").select("id")).length, 0);
+    denied(
+      await users.ownerB.client.rpc("save_property_draft", {
+        p_property_id: null,
+        p_title: "Forbidden owner",
+        p_slug: `forbidden-${randomUUID()}`,
+        p_property_type: "house",
+        p_barangay: "Caasinan",
+        p_description: "",
+        p_street_address: "Test address",
+        p_contact_name: "Test",
+        p_contact_phone: "09123456789",
+      }),
+    );
+  } finally {
+    await db.query("insert into public.account_roles(user_id,role) values($1,'owner')", [
+      users.ownerB.id,
+    ]);
+  }
+});

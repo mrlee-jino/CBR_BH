@@ -212,7 +212,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
             </p>
             <div className="request-footnote">
               <Info size={16} aria-hidden="true" />
-              <span>Accounts and real booking requests are coming in a later milestone.</span>
+              <span>Real listings and booking requests are coming in a later milestone.</span>
             </div>
           </div>
         </aside>

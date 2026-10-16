@@ -26,6 +26,7 @@ export function SiteFooter() {
           <Link href="/#how-it-works">How it works</Link>
           <Link href="/#for-owners">For property owners</Link>
           <Link href="/preview">About this preview</Link>
+          <Link href="/dashboard">Your account / sign in</Link>
         </nav>
         <div className="footer-location">
           <span className="eyebrow">STARTING CLOSE TO HOME</span>

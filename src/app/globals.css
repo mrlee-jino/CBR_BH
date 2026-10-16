@@ -2611,3 +2611,212 @@ body:has(dialog[open]) {
     transition: none !important;
   }
 }
+
+/* Accounts: public discovery remains usable independently of authentication. */
+.auth-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 80px;
+  padding-block: 65px;
+  min-height: 650px;
+}
+.auth-story h1 {
+  margin-top: 18px;
+  font-size: clamp(36px, 4.5vw, 60px);
+}
+.auth-story h1 em {
+  color: var(--primary);
+  font-family: Georgia, serif;
+  font-weight: 400;
+}
+.auth-story > p {
+  margin-top: 24px;
+  max-width: 430px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.auth-story-art {
+  display: flex;
+  align-items: end;
+  gap: 25px;
+  padding: 35px 20px 15px;
+  color: #9776b3;
+}
+.auth-card,
+.account-card {
+  padding: 32px;
+  border: 1px solid var(--line);
+  background: #fffdfd;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px #58347609;
+}
+.auth-card h2 {
+  margin-top: 12px;
+  font-size: 30px;
+}
+.auth-description {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.9;
+}
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 24px;
+}
+.auth-form .field label {
+  font-size: 13px;
+}
+.auth-form .field input {
+  height: 47px;
+  font-size: 14px;
+}
+.field-help {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.8;
+  margin-top: 5px;
+}
+.check-label {
+  display: flex;
+  align-items: start;
+  gap: 11px;
+  color: #6d597e;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.check-label input {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 3px;
+  accent-color: var(--primary);
+}
+.check-label a,
+.auth-footer a,
+.form-message a {
+  color: var(--primary-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.form-message {
+  padding: 14px;
+  border: 1px solid #dfcfe8;
+  background: #f6edf8;
+  color: #634577;
+  font-size: 13px;
+  border-radius: 7px;
+  overflow-wrap: anywhere;
+}
+.form-message.success {
+  background: #edf4f1;
+  color: #365c4c;
+  border-color: #d0e4db;
+}
+.auth-card > .form-message {
+  margin-top: 20px;
+}
+.auth-footer {
+  margin-top: 25px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+.account-page {
+  padding-block: 50px 70px;
+  min-height: 60vh;
+}
+.account-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.account-heading h1 {
+  margin-top: 10px;
+  overflow-wrap: anywhere;
+  font-size: clamp(30px, 4vw, 46px);
+}
+.account-nav {
+  display: flex;
+  gap: 22px;
+  padding-block: 20px;
+  margin-block: 22px 30px;
+  border-block: 1px solid var(--line);
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+.account-nav a:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+.account-card {
+  max-width: 700px;
+}
+.account-card h2 {
+  font-size: 28px;
+}
+.mfa-setup {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.mfa-setup code {
+  display: block;
+  overflow-wrap: anywhere;
+  padding: 10px;
+  background: var(--lavender-light);
+  color: var(--ink);
+}
+@media (max-width: 900px) {
+  .auth-layout {
+    gap: 35px;
+  }
+  .auth-card {
+    padding: 25px;
+  }
+}
+@media (max-width: 700px) {
+  .auth-layout {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding-block: 35px;
+  }
+  .auth-story h1 {
+    font-size: 39px;
+  }
+  .auth-story-art,
+  .auth-story > .field-help {
+    display: none;
+  }
+  .auth-story > p {
+    margin-top: 18px;
+    font-size: 13px;
+  }
+  .auth-card,
+  .account-card {
+    padding: 24px;
+  }
+  .account-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+  .account-page {
+    padding-block: 30px 40px;
+  }
+  .account-nav {
+    gap: 15px;
+    font-size: 12px;
+  }
+}

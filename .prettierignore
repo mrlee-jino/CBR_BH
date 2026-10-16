@@ -7,3 +7,5 @@ next-env.d.ts
 public/
 docs/
 README.md
+supabase/.temp/
+supabase/.branches/

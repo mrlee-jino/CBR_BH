@@ -224,7 +224,7 @@ export default function Home() {
           </div>
           <p className="how-note">
             <Sparkles size={15} aria-hidden="true" />
-            Today, you can explore sample homes. Accounts and real requests come next.
+            Today, you can explore sample homes. Real listings and requests come next.
           </p>
         </div>
       </section>

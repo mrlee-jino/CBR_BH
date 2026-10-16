@@ -13,7 +13,7 @@ XDG_CONFIG_HOME=/tmp/puyohub-config npm_config_cache=/tmp/puyohub-npm-cache \
 
 The resolved scaffold and Next.js version was 16.4.2. Only intended scaffold/config files were copied into the existing checkout; the README and design documents were preserved. Do not rerun this scaffold command to refresh an existing application. Use `npm ci` from the repository root instead.
 
-Runtime: Node 24.19.0; package manager: npm 11.9.0. Direct dependencies are exact-pinned in `package.json`; transitive dependencies are locked in `package-lock.json`. The initial app uses Next.js 16.4.2, React 19.3.0, and Tailwind 4.3.3. Supabase/Leaflet packages are deferred until their actual integration milestones.
+Runtime: Node 24.19.0; package manager: npm 11.9.0. Direct dependencies are exact-pinned in `package.json`; transitive dependencies are locked in `package-lock.json`. The initial app uses Next.js 16.4.2, React 19.3.0, and Tailwind 4.3.3. Supabase SSR/JS and the CLI are now integrated; Leaflet remains deferred until real map integration.
 
 ## Structure
 
@@ -27,7 +27,7 @@ Runtime: Node 24.19.0; package manager: npm 11.9.0. Direct dependencies are exac
 
 Feature components stay close to their data/query logic; shared UI primitives can be extracted when several real features need them. Search uses native GET forms and server rendering. Unknown areas/types are ignored safely, query length is bounded, and invalid numeric budgets display validation errors rather than apparently valid search results. Sorting operates on a new filtered array, leaving fixture ordering intact.
 
-The preview's server-rendered pages require no credentials. Never introduce fake admin sessions, hardcoded tokens, or client-only permission checks to make later dashboards appear functional. Real data access must use the authorization design in `database.md`.
+The discovery fixtures need no credentials; account routes use Supabase SSR and the public project settings in `.env.example`. Auth and database setup/testing are documented in `supabase-setup.md`. Never introduce fake admin sessions, hardcoded tokens, or client-only permission checks. Real data access follows the migrations and the authorization design in `database.md`.
 
 ## Design and scope
 
