@@ -145,6 +145,9 @@ test("navigation and the skip link work at the selected viewport", async ({ page
 });
 
 test("core pages and the request dialog pass automated accessibility checks", async ({ page }) => {
+  // Measure the settled page rather than a partially transparent entry frame.
+  // Motion itself is covered separately by interaction.spec.ts.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   for (const route of [
     "/",
     "/preview/rentals",
