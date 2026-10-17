@@ -15,10 +15,12 @@ export function DashboardShell({ title, children }: { title: string; children: R
       </div>
       <nav className="account-nav" aria-label="Account navigation">
         <Link href="/dashboard">Overview</Link>
+        <Link href="/dashboard/requests">My requests</Link>
         <Link href="/dashboard/settings">Profile</Link>
         <Link href="/dashboard/security">Security</Link>
         <Link href="/become-an-owner">Owner access</Link>
         <Link href="/owner">My properties</Link>
+        <Link href="/owner/requests">Owner requests</Link>
       </nav>
       {children}
     </section>

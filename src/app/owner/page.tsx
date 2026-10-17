@@ -18,7 +18,12 @@ export default async function Owner() {
     <DashboardShell title="Your owner workspace.">
       <span className="eyebrow">OWNER ACCESS ACTIVE</span>
       <div className="listing-toolbar">
-        <p>Manage your properties, rooms, and monthly offers.</p>
+        <p>
+          Manage your properties, rooms, and monthly offers.{" "}
+          <Link className="text-link" href="/owner/requests">
+            Review viewing and booking requests →
+          </Link>
+        </p>
         <Link className="button" href="/owner/properties/new">
           Add a property
         </Link>

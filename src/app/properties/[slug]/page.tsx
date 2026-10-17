@@ -70,6 +70,12 @@ export default async function Property({ params }: { params: Promise<{ slug: str
                   <p className="preserve-lines">
                     {u.terms || "Ask about rental terms before agreeing to a tenancy."}
                   </p>
+                  <Link
+                    className="button button-outline"
+                    href={`/properties/${p.slug}/request?kind=booking&unit=${u.id}`}
+                  >
+                    Request this unit
+                  </Link>
                 </article>
               ))}
             </div>
@@ -80,11 +86,11 @@ export default async function Property({ params }: { params: Promise<{ slug: str
           <h2>{formatPeso(p.monthly_rent)}</h2>
           <p>Per month. Deposits and terms vary by unit.</p>
           <p>
-            Viewing and booking requests are coming next. No reservation can be made on this page
-            yet.
+            Arrange a viewing or choose a room to request a monthly booking. Requests need owner
+            confirmation and do not collect payment.
           </p>
-          <Link href="/properties" className="button button-outline">
-            Keep exploring
+          <Link href={`/properties/${p.slug}/request?kind=viewing`} className="button">
+            Request a viewing
           </Link>
         </aside>
       </div>

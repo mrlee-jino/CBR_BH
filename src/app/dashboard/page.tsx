@@ -54,11 +54,16 @@ export default async function Dashboard() {
               <h2>A few everyday essentials.</h2>
               <p>
                 Manage your private profile, set up an authenticator, or activate owner access.
-                Requests and favorites follow in the next milestones.
+                Track your viewing and booking requests in your request inbox.
               </p>
               <Link className="text-link" href="/dashboard/settings">
                 Edit your profile →
               </Link>
+              <p>
+                <Link className="text-link" href="/dashboard/requests">
+                  My requests →
+                </Link>
+              </p>
             </section>
           </div>
         </>

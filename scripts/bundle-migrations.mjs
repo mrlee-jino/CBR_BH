@@ -30,3 +30,10 @@ writeFileSync(
   "supabase/upgrade-photos.sql",
   `-- Existing PuyoHub projects with migrations 001–004 applied. Run once.\nbegin;\n${photos}\ncommit;\n`,
 );
+
+const requests = parts.find((part) => part.includes("_request_context.sql"));
+if (!requests) throw new Error("Request context migration is missing.");
+writeFileSync(
+  "supabase/upgrade-requests.sql",
+  `-- Existing PuyoHub projects with the core, listing, and photo migrations applied. Run once.\nbegin;\n${requests}\ncommit;\n`,
+);

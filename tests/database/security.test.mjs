@@ -874,19 +874,93 @@ test("incremental SQL Editor upgrade preserves existing listings and records onl
   }
 });
 
+test("incremental request upgrade preserves requests and restricts anonymous execution", async () => {
+  const source = readFileSync("supabase/upgrade-requests.sql", "utf8");
+  const sql = source.slice(source.indexOf("begin;\n") + 7, source.lastIndexOf("commit;"));
+  await db.query("begin");
+  try {
+    const before = await db.query("select count(*)::int as count from public.booking_requests");
+    await db.query(
+      "drop function public.get_request_context(uuid[],uuid[]); delete from supabase_migrations.schema_migrations where version='20261017145319'",
+    );
+    await db.query(sql);
+    const after = await db.query("select count(*)::int as count from public.booking_requests");
+    assert.equal(after.rows[0].count, before.rows[0].count);
+    const grants = await db.query(
+      "select has_function_privilege('anon','public.get_request_context(uuid[],uuid[])','execute') as anon_access, has_function_privilege('authenticated','public.get_request_context(uuid[],uuid[])','execute') as authenticated_access",
+    );
+    assert.equal(grants.rows[0].anon_access, false);
+    assert.equal(grants.rows[0].authenticated_access, true);
+    assert.equal(
+      (
+        await db.query(
+          "select version from supabase_migrations.schema_migrations where version='20261017145319'",
+        )
+      ).rowCount,
+      1,
+    );
+  } finally {
+    await db.query("rollback");
+  }
+});
+
+test("request context only reveals labels to participants and retains history after a listing is paused", async () => {
+  const target = await published(users.ownerA.client, "Request context fixture");
+  const booking = ok(await request(users.renterA.client, target.unit));
+  const viewing = ok(
+    await users.renterA.client.rpc("submit_viewing", {
+      p_property_id: target.id,
+      p_requested_at: new Date(Date.now() + 86400000).toISOString(),
+      p_message: "Private note",
+      p_consent: true,
+    }),
+  );
+  const args = { p_booking_ids: [booking], p_viewing_ids: [viewing] };
+  denied(await anon.rpc("get_request_context", args));
+  assert.deepEqual(ok(await users.renterB.client.rpc("get_request_context", args)), []);
+  assert.deepEqual(ok(await users.ownerB.client.rpc("get_request_context", args)), []);
+  for (const actor of [users.renterA.client, users.ownerA.client]) {
+    const rows = ok(await actor.rpc("get_request_context", args));
+    assert.equal(rows.length, 2);
+    assert.ok(
+      rows.every((r) => r.title === "Request context fixture" && r.property_id === target.id),
+    );
+    assert.deepEqual(Object.keys(rows[0]).sort(), [
+      "kind",
+      "owner_id",
+      "property_id",
+      "request_id",
+      "slug",
+      "title",
+      "unit_label",
+    ]);
+  }
+  assert.deepEqual(
+    ok(await users.renterA.client.from("units").select("id").eq("id", target.unit)),
+    [],
+  );
+  await db.query("update public.properties set status='paused' where id=$1", [target.id]);
+  assert.equal(ok(await users.renterA.client.rpc("get_request_context", args)).length, 2);
+  denied(await users.renterA.client.rpc("get_property_contact", { p_property_id: target.id }));
+  const grants = await db.query(
+    "select has_function_privilege('anon','public.get_request_context(uuid[],uuid[])','execute') as anon_access",
+  );
+  assert.equal(grants.rows[0].anon_access, false);
+});
+
 test("SQL Editor bundle bootstraps a fresh app schema and records migration versions atomically", async () => {
   const source = readFileSync("supabase/bootstrap.sql", "utf8");
   const sql = source.slice(source.indexOf("begin;\n") + 7, source.lastIndexOf("commit;"));
   await db.query("begin");
   try {
     await db.query(
-      "drop policy if exists puyohub_photos_closed on storage.objects; drop schema public cascade; drop schema private cascade; create schema public; grant usage on schema public to anon,authenticated,service_role; delete from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500')",
+      "drop policy if exists puyohub_photos_closed on storage.objects; drop schema public cascade; drop schema private cascade; create schema public; grant usage on schema public to anon,authenticated,service_role; delete from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319')",
     );
     await db.query(sql);
     const result = await db.query(
-      "select count(*)::int as count from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500')",
+      "select count(*)::int as count from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319')",
     );
-    assert.equal(result.rows[0].count, 5);
+    assert.equal(result.rows[0].count, 6);
     const profiles = await db.query("select count(*)::int as count from public.profiles");
     assert.ok(profiles.rows[0].count >= 6, "Existing Auth accounts should be backfilled safely");
   } finally {

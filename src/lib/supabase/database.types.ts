@@ -839,6 +839,18 @@ export type Database = {
           unit_type: string;
         }[];
       };
+      get_request_context: {
+        Args: { p_booking_ids: string[]; p_viewing_ids: string[] };
+        Returns: {
+          kind: string;
+          owner_id: string;
+          property_id: string;
+          request_id: string;
+          slug: string;
+          title: string;
+          unit_label: string;
+        }[];
+      };
       get_requester_contact: {
         Args: { p_kind: string; p_request_id: string };
         Returns: {

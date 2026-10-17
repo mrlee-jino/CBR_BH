@@ -17,9 +17,10 @@
     "db:types": "node scripts/generate-types.mjs",
     "test:setup": "node scripts/local-supabase.mjs",
     "test:db": "node --test --test-concurrency=1 tests/database/*.test.mjs",
-    "check:app": "npm run format:check && npm run lint && npm run typecheck && npm run test:db && npm run test:images && npm run build && playwright test",
+    "check:app": "npm run format:check && npm run lint && npm run typecheck && npm run test:db && npm run test:images && npm run test:requests && npm run build && playwright test",
     "db:bundle": "node scripts/bundle-migrations.mjs",
-    "test:images": "node --experimental-strip-types --test tests/images/*.test.mjs"
+    "test:images": "node --experimental-strip-types --test tests/images/*.test.mjs",
+    "test:requests": "node --experimental-strip-types --test tests/requests/*.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",

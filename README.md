@@ -6,7 +6,7 @@ A rental discovery marketplace and property management platform, starting with m
 
 The app includes owner property/room forms, admin review with MFA, and public search/detail pages backed by approved Supabase listings. Signup/email confirmation, login/logout, recovery, private profiles, and owner activation are implemented. Migrations and security tests run against a real local Supabase stack. Hosted activation requires the operator steps in [Supabase setup](docs/supabase-setup.md) and [the listing workspace upgrade](docs/listing-workspaces.md).
 
-Six fictional listings remain in a clearly separate demo at `/preview/rentals`. Public discovery never substitutes demo inventory for real listings. Secure photo processing and moderation are implemented. Booking/viewing interfaces, maps, favorites UI, and payments remain future milestones.
+Six fictional listings remain in a clearly separate demo at `/preview/rentals`. Public discovery never substitutes demo inventory for real listings. Secure photo processing and moderation, viewing/booking forms, renter request history, and owner request decisions are implemented. Maps and favorites UI remain future milestones; payments are outside this release. See the [system review](docs/system-review.md).
 
 The first release covers discovery, favorites, viewing requests, monthly booking requests, owner inventory management, and admin moderation. Online payments, subscriptions, rent accounting, and nightly stays are outside this release.
 
@@ -39,10 +39,11 @@ Routes:
 - `/preview` — current capabilities and limitations.
 - `/signup`, `/login`, `/resend-confirmation`, `/forgot-password`, `/reset-password`, `/auth/confirm` — email/password authentication.
 - `/dashboard`, `/dashboard/settings`, `/dashboard/security` — protected overview, private profile, and authenticator setup.
+- `/properties/[slug]/request`, `/dashboard/requests`, `/dashboard/requests/[id]`, `/owner/requests` — verified request forms, renter history, participant details, and owner decisions.
 - `/become-an-owner`, `/owner`, `/owner/properties/new`, `/owner/properties/[id]` — owner activation, property drafts, rooms, offers, and review feedback.
 - `/admin`, `/admin/properties/[id]` — MFA-protected listing queues and review decisions.
 
-Live listings contain owner-provided details reviewed by admins. Offering a unit does not guarantee availability for particular dates. Owners can upload validated photos for admin review; listings without photos use labeled placeholders. Fictional artwork and decorative area diagrams are confined to the demo; demo and private account pages are excluded from indexing. Public listing pages are indexable. No public booking or viewing forms are available yet.
+Live listings contain owner-provided details reviewed by admins. Offering a unit does not guarantee availability for particular dates. Owners can upload validated photos for admin review; listings without photos use labeled placeholders. Fictional artwork and decorative area diagrams are confined to the demo; demo and private account pages are excluded from indexing. Public listing pages are indexable. Verified renters can request viewings and monthly bookings; pending requests do not reserve inventory. See [request workspace setup](docs/viewing-booking.md).
 
 ## Validate
 
@@ -62,7 +63,7 @@ The browser suite covers the separate discovery demo plus real local signup/veri
 
 `npm run check` runs formatting, lint, types, database/API tests, a production build, and browser tests after the local stack/test configuration and Chromium are ready. GitHub Actions starts/reset the local stack and runs those checks for pushes to `main` and pull requests. Reports/traces are ignored locally and retained as CI failure artifacts. Refresh committed schema types with `npm run db:types` and the first-install SQL bundle with `npm run db:bundle` after migration changes.
 
-Next: apply the incremental listing upgrade to your hosted development project, test a real owner/admin publication flow, activate secure photos, then build viewing/booking interfaces. See [the implementation plan](docs/implementation.md).
+Next: apply the incremental request upgrade after the listing/photo upgrades, run the full integration suite, and test renter/owner confirmations in staging. See [the request setup](docs/viewing-booking.md) and [implementation plan](docs/implementation.md).
 
 Owner listing creation, rooms, admin review, and live public discovery: see [listing workspace setup and upgrade](docs/listing-workspaces.md). Existing Supabase projects must run `supabase/upgrade-listings.sql` once before deploying this milestone.
 
