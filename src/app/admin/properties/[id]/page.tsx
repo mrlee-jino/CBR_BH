@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/ui/navigation-link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { requireRole } from "@/features/auth/account";
@@ -7,6 +7,7 @@ import { ReviewForm } from "@/features/listings/forms";
 import { createClient } from "@/lib/supabase/server";
 import { formatPeso } from "@/lib/money";
 import { ManagedPhotos } from "@/features/photos/gallery";
+import { PromotionForm } from "@/features/promotions/form";
 export const metadata = { title: "Review property" };
 export default async function Review({ params }: { params: Promise<{ id: string }> }) {
   await requireRole("admin");
@@ -31,8 +32,31 @@ export default async function Review({ params }: { params: Promise<{ id: string 
     throw new Error("Could not load listing review.");
   if (!p.data) notFound();
   const property = p.data;
+  const promotion = await client
+    .from("listing_promotions")
+    .select("priority,expires_at,reason")
+    .eq("property_id", id)
+    .maybeSingle();
+  if (promotion.error)
+    throw new Error("Could not load featured placement. Apply the account experience upgrade.");
+  const promotionEnd = promotion.data
+    ? new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(
+        new Date(promotion.data.expires_at),
+      )
+    : "";
   return (
     <DashboardShell title={property.title}>
+      {(property.status === "published" || promotion.data) && (
+        <section className="account-card">
+          <h2>Featured placement</h2>
+          <PromotionForm
+            id={id}
+            priority={promotion.data?.priority}
+            expires={promotionEnd}
+            reason={promotion.data?.reason}
+          />
+        </section>
+      )}
       <Link className="text-link" href="/admin">
         ← Review queue
       </Link>

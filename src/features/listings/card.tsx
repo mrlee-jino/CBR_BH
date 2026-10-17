@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/ui/navigation-link";
 import { House, MapPin, ArrowUpRight } from "lucide-react";
 import { formatPeso } from "@/lib/money";
 import type { Listing } from "./public";
@@ -29,6 +29,7 @@ export function ListingCard({ property: p }: { property: Listing }) {
         <span className="image-badge">Admin reviewed</span>
       </Link>
       <div className="card-body">
+        {p.featured && <span className="promotion-badge">Featured · Promoted</span>}
         <div className="card-meta">
           <span>{p.property_type.replaceAll("_", " ")}</span>
           <span>Monthly rental</span>

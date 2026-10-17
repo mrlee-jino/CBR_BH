@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/ui/navigation-link";
 import { ArrowUpRight, MapPin } from "lucide-react";
 import { formatPeso } from "@/lib/money";
 import { AmenityIcon } from "./amenity-icon";

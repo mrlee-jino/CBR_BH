@@ -1,3 +1,4 @@
+import { confirmAction } from "../helpers/confirm-action";
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { randomUUID } from "node:crypto";
@@ -38,6 +39,7 @@ test("signup, email confirmation, profile, owner activation, logout and recovery
 }) => {
   const email = `puyo-browser-${randomUUID()}@example.test`;
   await page.goto("/signup");
+  await page.getByRole("radio", { name: /^Renter/ }).check();
   await page.getByLabel("Your name").fill("Cabadbaran Neighbor");
   await page.getByLabel("Email address").fill(email);
   await page.getByLabel("Password", { exact: true }).fill(password);
@@ -48,6 +50,11 @@ test("signup, email confirmation, profile, owner activation, logout and recovery
   await page.goto(confirmation);
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Cabadbaran Neighbor");
+  const renterNav = page.getByRole("navigation", { name: "Account navigation" });
+  await expect(renterNav.getByRole("link", { name: "My requests", exact: true })).toBeVisible();
+  await expect(
+    renterNav.getByRole("link", { name: /Owner|My properties|Administration/ }),
+  ).toHaveCount(0);
   await page.reload();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Cabadbaran Neighbor");
   await page
@@ -65,9 +72,29 @@ test("signup, email confirmation, profile, owner activation, logout and recovery
   await page.getByRole("button", { name: "Activate owner access" }).click();
   await expect(page).toHaveURL(/\/owner$/);
   await expect(page.getByText("OWNER ACCESS ACTIVE")).toBeVisible();
+  await expect(
+    page
+      .getByRole("navigation", { name: "Account navigation" })
+      .getByRole("link", { name: "Property requests", exact: true }),
+  ).toBeVisible();
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/dashboard$/);
-  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  const signout = page.getByRole("button", { name: "Sign out", exact: true });
+  await signout.click();
+  const dialog = page.getByRole("dialog", { name: "Sign out of PuyoHub?" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Cancel", exact: true })).toBeFocused();
+  expect(
+    (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze())
+      .violations,
+  ).toEqual([]);
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toBeVisible();
+  await expect(signout).toBeFocused();
+  await signout.click();
+  await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await confirmAction(page, "Sign out");
   await expect(page).toHaveURL(/\/login$/);
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/login\?next=/);
@@ -85,7 +112,7 @@ test("signup, email confirmation, profile, owner activation, logout and recovery
   await page.getByLabel("Email address").fill(email);
   await page.getByLabel("Password", { exact: true }).fill(newPassword);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page).toHaveURL(/\/owner$/);
 });
 
 test("unverified email cannot sign in and a forged return URL never redirects off-site", async ({
@@ -103,6 +130,30 @@ test("unverified email cannot sign in and a forged return URL never redirects of
   await expect(page).toHaveURL(/\/login\?message=invalid-link$/);
   await page.goto("/reset-password");
   await expect(page.getByText("Open a valid recovery link")).toBeVisible();
+});
+
+test("property owner signup guides verified users into owner setup without granting administrator access", async ({
+  page,
+}) => {
+  const email = `puyo-owner-signup-${randomUUID()}@example.test`;
+  await page.goto("/signup");
+  await page.getByRole("radio", { name: /^Property owner/ }).check();
+  await page.getByLabel("Your name").fill("New Property Owner");
+  await page.getByLabel("Email address").fill(email);
+  await page.getByLabel("Password", { exact: true }).fill(password);
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Create account", exact: true }).click();
+  await expect(page.getByRole("status").filter({ hasText: "confirmation email" })).toBeVisible();
+  await page.goto(await emailLink(email));
+  await expect(page).toHaveURL(/\/become-an-owner$/);
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Activate owner access", exact: true }).click();
+  await expect(page).toHaveURL(/\/owner$/);
+  const nav = page.getByRole("navigation", { name: "Account navigation" });
+  await expect(nav.getByRole("link", { name: "My properties", exact: true })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Administration", exact: true })).toHaveCount(0);
+  await page.goto("/admin");
+  await expect(page).toHaveURL(/\/dashboard$/);
 });
 
 test("auth forms remain accessible on desktop and mobile", async ({ page }) => {
@@ -136,7 +187,7 @@ test("token-hash confirmation is single-use and ignores off-site redirects", asy
   const path = `/auth/confirm?token_hash=${encodeURIComponent(data.properties.hashed_token)}&type=signup&next=//example.com`;
   await page.goto(path);
   await expect(page).toHaveURL(/\/dashboard$/);
-  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await confirmAction(page, "Sign out");
   await page.goto(path);
   await expect(page).toHaveURL(/\/login\?message=invalid-link$/);
 });

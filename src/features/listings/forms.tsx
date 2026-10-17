@@ -1,4 +1,5 @@
 "use client";
+import { ActionButton } from "@/components/ui/action-button";
 
 import { useActionState, useState } from "react";
 import type { Database } from "@/lib/supabase/database.types";
@@ -124,9 +125,22 @@ export function PropertyForm({
         />
       </fieldset>
       <Feedback state={state} />
-      <button className="button" disabled={pending}>
+      <ActionButton
+        className="button"
+        pending={pending}
+        confirmation={
+          property?.status === "published"
+            ? {
+                title: "Pause this published listing?",
+                description:
+                  "Saving these changes removes the listing from public search until it is reviewed and published again.",
+                confirmLabel: "Save and pause",
+              }
+            : undefined
+        }
+      >
         {pending ? "Saving…" : property ? "Save property" : "Create property"}
-      </button>
+      </ActionButton>
     </form>
   );
 }
@@ -223,9 +237,9 @@ export function UnitForm({ propertyId, unit }: { propertyId: string; unit?: Row<
         one unit for each separately rentable bed or room.
       </p>
       <Feedback state={state} />
-      <button className="button button-outline" disabled={pending}>
+      <ActionButton className="button button-outline" pending={pending}>
         {pending ? "Saving…" : unit ? "Save room" : "Add room or bedspace"}
-      </button>
+      </ActionButton>
     </form>
   );
 }
@@ -236,9 +250,18 @@ export function SubmitForm({ propertyId }: { propertyId: string }) {
       <input type="hidden" name="property_id" value={propertyId} />
       <p>Check your details and active units before submitting. Editing is locked during review.</p>
       <Feedback state={state} />
-      <button className="button" disabled={pending}>
+      <ActionButton
+        className="button"
+        pending={pending}
+        confirmation={{
+          title: "Submit this listing for review?",
+          description:
+            "Check the property details, rooms, and photos. Editing will be locked while an admin reviews this listing.",
+          confirmLabel: "Submit for review",
+        }}
+      >
         {pending ? "Submitting…" : "Submit for review"}
-      </button>
+      </ActionButton>
     </form>
   );
 }
@@ -279,9 +302,18 @@ export function ReviewForm({ property }: { property: Row<"properties"> }) {
         confirms your review of the property; it does not guarantee a vacancy.
       </p>
       <Feedback state={state} />
-      <button className="button" disabled={pending}>
+      <ActionButton
+        className="button"
+        pending={pending}
+        confirmation={{
+          title: "Apply this listing decision?",
+          description:
+            "Your selected decision changes the listing’s publication status. Review notes will be recorded and shared with the owner.",
+          confirmLabel: "Apply decision",
+        }}
+      >
         {pending ? "Saving…" : "Save review"}
-      </button>
+      </ActionButton>
     </form>
   );
 }

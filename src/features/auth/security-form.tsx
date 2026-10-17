@@ -1,4 +1,5 @@
 "use client";
+import { ActionButton } from "@/components/ui/action-button";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -68,9 +69,9 @@ export function SecurityForm({ factorId, verified }: { factorId?: string; verifi
   return (
     <div className="auth-form">
       {!factorId && !enrollment && (
-        <button className="button" onClick={enroll} disabled={pending}>
+        <ActionButton className="button" onClick={enroll} pending={pending}>
           {pending ? "Preparing…" : "Set up an authenticator"}
-        </button>
+        </ActionButton>
       )}
       {enrollment && (
         <div className="mfa-setup">
@@ -103,9 +104,9 @@ export function SecurityForm({ factorId, verified }: { factorId?: string; verifi
               required
             />
           </div>
-          <button className="button" disabled={pending}>
+          <ActionButton className="button" pending={pending}>
             {pending ? "Verifying…" : "Verify authenticator"}
-          </button>
+          </ActionButton>
         </form>
       )}
       {message && (

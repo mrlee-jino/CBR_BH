@@ -1,6 +1,7 @@
 export default function Loading() {
   return (
     <div className="container loading-state" role="status">
+      <span className="ui-spinner page-spinner" aria-hidden="true" />
       <span className="eyebrow">FINDING YOUR SPACE</span>
       <p>Loading PuyoHub…</p>
       <div className="skeleton-grid" aria-hidden="true">

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/ui/navigation-link";
 import { House, Sprout } from "lucide-react";
 
 export function AuthShell({

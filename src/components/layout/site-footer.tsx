@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/ui/navigation-link";
 import { ArrowUpRight, House } from "lucide-react";
 
 export function SiteFooter() {

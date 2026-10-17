@@ -1,4 +1,5 @@
 "use client";
+import { ActionButton } from "@/components/ui/action-button";
 import { useActionState, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { editPhoto, reviewPhoto, cleanupPhotos, type PhotoState } from "./actions";
@@ -72,9 +73,9 @@ export function UploadPhoto({ propertyId }: { propertyId: string }) {
         stripped of embedded metadata, and reviewed before publication.
       </p>
       <Feedback state={state} />
-      <button className="button button-outline" disabled={pending}>
+      <ActionButton className="button button-outline" pending={pending}>
         {pending ? "Processing photo…" : "Upload photo"}
-      </button>
+      </ActionButton>
     </form>
   );
 }
@@ -93,23 +94,29 @@ export function OwnerPhotoActions({
       <input type="hidden" name="photo_id" value={id} />
       <div className="photo-controls">
         {!cover && !rejected && (
-          <button
+          <ActionButton
             className="button button-outline button-small"
             name="action"
             value="cover"
-            disabled={pending}
+            pending={pending}
           >
             Use as cover
-          </button>
+          </ActionButton>
         )}
-        <button
+        <ActionButton
           className="button button-outline button-small"
           name="action"
           value="remove"
-          disabled={pending}
+          confirmation={{
+            title: "Remove this photo?",
+            description:
+              "The photo will be removed from this property. You’ll need to upload it again to restore it.",
+            confirmLabel: "Remove photo",
+          }}
+          pending={pending}
         >
           Remove photo
-        </button>
+        </ActionButton>
       </div>
       <Feedback state={state} />
     </form>
@@ -141,9 +148,18 @@ export function PhotoReview({ id }: { id: string }) {
         />
       </div>
       <Feedback state={state} />
-      <button className="button button-outline" disabled={pending}>
+      <ActionButton
+        className="button button-outline"
+        pending={pending}
+        confirmation={{
+          title: "Apply this photo review?",
+          description:
+            "Your selected approval or rejection and review note will be saved. Approved photos are eligible for publication with the listing.",
+          confirmLabel: "Apply photo review",
+        }}
+      >
         {pending ? "Saving…" : "Save photo review"}
-      </button>
+      </ActionButton>
     </form>
   );
 }
@@ -153,9 +169,18 @@ export function PhotoCleanup() {
     <form action={action} className="auth-form">
       <p>Delete files left by removed or abandoned uploads. Each pass handles up to 25 files.</p>
       <Feedback state={state} />
-      <button className="button button-outline" disabled={pending}>
+      <ActionButton
+        className="button button-outline"
+        pending={pending}
+        confirmation={{
+          title: "Delete unused photo files?",
+          description:
+            "Removed or abandoned photo uploads will be permanently deleted. Photos still in use will be kept.",
+          confirmLabel: "Delete unused files",
+        }}
+      >
         {pending ? "Cleaning up…" : "Clean up unused photos"}
-      </button>
+      </ActionButton>
     </form>
   );
 }

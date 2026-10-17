@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/navigation-link";
 
 export default function ErrorPage({ reset }: { reset: () => void }) {
   return (

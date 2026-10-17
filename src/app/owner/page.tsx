@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/ui/navigation-link";
 import { requireRole } from "@/features/auth/account";
 import { DashboardShell } from "@/features/auth/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";

@@ -954,15 +954,130 @@ test("SQL Editor bundle bootstraps a fresh app schema and records migration vers
   await db.query("begin");
   try {
     await db.query(
-      "drop policy if exists puyohub_photos_closed on storage.objects; drop schema public cascade; drop schema private cascade; create schema public; grant usage on schema public to anon,authenticated,service_role; delete from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319')",
+      "drop policy if exists puyohub_photos_closed on storage.objects; drop schema public cascade; drop schema private cascade; create schema public; grant usage on schema public to anon,authenticated,service_role; delete from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319','20261017154740')",
     );
     await db.query(sql);
     const result = await db.query(
-      "select count(*)::int as count from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319')",
+      "select count(*)::int as count from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319','20261017154740')",
     );
-    assert.equal(result.rows[0].count, 6);
+    assert.equal(result.rows[0].count, 7);
     const profiles = await db.query("select count(*)::int as count from public.profiles");
     assert.ok(profiles.rows[0].count >= 6, "Existing Auth accounts should be backfilled safely");
+  } finally {
+    await db.query("rollback");
+  }
+});
+
+test("featured placement requires admin MFA and keeps anonymous public search and user sorting intact", async () => {
+  const marker = `Promotion-${randomUUID()}`;
+  const first = await published(users.ownerA.client, `${marker} A`);
+  const second = await published(users.ownerA.client, `${marker} B`);
+  await db.query("update public.units set monthly_rent=1000 where id=$1", [second.unit]);
+  const args = {
+    p_property_id: first.id,
+    p_priority: 80,
+    p_expires_at: new Date(Date.now() + 7 * 86400000).toISOString(),
+    p_reason: "Synthetic placement agreement",
+  };
+  denied(await anon.rpc("set_listing_promotion", args));
+  denied(await users.renterA.client.rpc("set_listing_promotion", args));
+  denied(await users.ownerA.client.rpc("set_listing_promotion", args));
+  const weak = createClient(
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    options,
+  );
+  ok(await weak.auth.signInWithPassword({ email: users.admin.email, password }));
+  denied(await weak.rpc("set_listing_promotion", args));
+  denied(
+    await users.admin.client.from("listing_promotions").insert({
+      property_id: first.id,
+      priority: 80,
+      expires_at: args.p_expires_at,
+      reason: "Cannot bypass RPC",
+      updated_by: users.admin.id,
+    }),
+  );
+  ok(await users.admin.client.rpc("set_listing_promotion", args));
+  assert.deepEqual(ok(await users.ownerA.client.from("listing_promotions").select("*")), []);
+  denied(await anon.from("listing_promotions").select("*"));
+  const featured = ok(await anon.rpc("search_listings", { p_query: marker, p_sort: "featured" }));
+  assert.deepEqual(
+    featured.map((r) => r.id),
+    [first.id, second.id],
+  );
+  assert.deepEqual(
+    ok(await anon.rpc("search_listings", { p_query: marker, p_sort: "price-asc" })).map(
+      (r) => r.id,
+    ),
+    [second.id, first.id],
+  );
+  assert.deepEqual(
+    ok(await anon.rpc("get_featured_listings", { p_property_ids: [first.id, second.id] })),
+    [{ property_id: first.id }],
+  );
+  assert.equal(ok(await anon.rpc("get_public_listing", { p_slug: featured[0].slug })).length, 1);
+  denied(await users.admin.client.rpc("set_listing_promotion", { ...args, p_priority: 101 }));
+  denied(
+    await users.admin.client.rpc("set_listing_promotion", {
+      ...args,
+      p_expires_at: new Date(Date.now() - 1000).toISOString(),
+    }),
+  );
+  await db.query(
+    "update public.listing_promotions set expires_at=now()-interval '1 second' where property_id=$1",
+    [first.id],
+  );
+  assert.deepEqual(ok(await anon.rpc("get_featured_listings", { p_property_ids: [first.id] })), []);
+  assert.deepEqual(
+    ok(await anon.rpc("search_listings", { p_query: marker, p_sort: "featured" })).map((r) => r.id),
+    [second.id, first.id],
+  );
+  ok(await users.admin.client.rpc("set_listing_promotion", args));
+  await db.query("update public.properties set status='paused' where id=$1", [first.id]);
+  denied(await users.admin.client.rpc("set_listing_promotion", args));
+  assert.deepEqual(ok(await anon.rpc("get_featured_listings", { p_property_ids: [first.id] })), []);
+  assert.deepEqual(
+    ok(await anon.rpc("search_listings", { p_query: marker })).map((r) => r.id),
+    [second.id],
+  );
+  ok(
+    await users.admin.client.rpc("set_listing_promotion", {
+      ...args,
+      p_priority: 0,
+      p_expires_at: null,
+    }),
+  );
+  assert.deepEqual(
+    ok(
+      await users.admin.client
+        .from("listing_promotions")
+        .select("property_id")
+        .eq("property_id", first.id),
+    ),
+    [],
+  );
+});
+
+test("experience SQL upgrade preserves existing listings and promotion administration remains private", async () => {
+  const source = readFileSync("supabase/upgrade-experience.sql", "utf8");
+  const sql = source.slice(source.indexOf("begin;\n") + 7, source.lastIndexOf("commit;"));
+  await db.query("begin");
+  try {
+    const before = await db.query("select count(*)::int as count from public.properties");
+    await db.query(
+      "drop function public.set_listing_promotion(uuid,integer,timestamptz,text),public.get_featured_listings(uuid[]),public.search_listings(text,text,text,numeric,numeric,text,integer,integer); drop table public.listing_promotions; delete from supabase_migrations.schema_migrations where version='20261017154740'",
+    );
+    await db.query(sql);
+    assert.equal(
+      (await db.query("select count(*)::int as count from public.properties")).rows[0].count,
+      before.rows[0].count,
+    );
+    const grants = await db.query(
+      "select has_function_privilege('anon','public.set_listing_promotion(uuid,integer,timestamptz,text)','execute') as public_write, has_function_privilege('anon','public.search_listings(text,text,text,numeric,numeric,text,integer,integer)','execute') as public_search",
+    );
+    assert.equal(grants.rows[0].public_write, false);
+    assert.equal(grants.rows[0].public_search, true);
   } finally {
     await db.query("rollback");
   }

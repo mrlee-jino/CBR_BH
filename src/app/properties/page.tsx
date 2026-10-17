@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/ui/navigation-link";
 import { SearchFilters } from "@/features/properties/search-form";
 import { parseFilters, type SearchParams } from "@/features/properties/search";
 import { findListings } from "@/features/listings/public";
@@ -55,7 +55,10 @@ export default async function Properties({
       <section className="browse-intro container">
         <span className="eyebrow">YOUR SPACE IS OUT THERE</span>
         <h1>Find your next home.</h1>
-        <p>Monthly bedspaces, private rooms, and apartments in Cabadbaran City.</p>
+        <p>
+          Monthly bedspaces, private rooms, and apartments in Cabadbaran City. Browse and search
+          without signing in.
+        </p>
       </section>
       <div className="container browse-layout">
         <aside aria-label="Rental search filters">
@@ -65,7 +68,10 @@ export default async function Properties({
           <div className="results-toolbar">
             <div>
               <h2>Places to call home</h2>
-              <p>Admin-reviewed listings · prices in Philippine pesos</p>
+              <p>
+                Admin-reviewed listings · prices in Philippine pesos. Featured placements may be
+                paid; change the sort order to compare by price or name.
+              </p>
             </div>
           </div>
           {errors.length ? (

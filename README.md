@@ -6,6 +6,8 @@ A rental discovery marketplace and property management platform, starting with m
 
 The app includes owner property/room forms, admin review with MFA, and public search/detail pages backed by approved Supabase listings. Signup/email confirmation, login/logout, recovery, private profiles, and owner activation are implemented. Migrations and security tests run against a real local Supabase stack. Hosted activation requires the operator steps in [Supabase setup](docs/supabase-setup.md) and [the listing workspace upgrade](docs/listing-workspaces.md).
 
+Signup now offers **Renter** and **Property owner**, with simpler renter navigation and a separate owner workspace. Guest browsing needs no account. Admin-controlled, expiring featured placement is available after applying `supabase/upgrade-experience.sql`. See [administrator operation and setup](docs/admin-operations.md), including the separate `/admin/login` address and MFA requirements.
+
 Six fictional listings remain in a clearly separate demo at `/preview/rentals`. Public discovery never substitutes demo inventory for real listings. Secure photo processing and moderation, viewing/booking forms, renter request history, and owner request decisions are implemented. Maps and favorites UI remain future milestones; payments are outside this release. See the [system review](docs/system-review.md).
 
 The first release covers discovery, favorites, viewing requests, monthly booking requests, owner inventory management, and admin moderation. Online payments, subscriptions, rent accounting, and nightly stays are outside this release.

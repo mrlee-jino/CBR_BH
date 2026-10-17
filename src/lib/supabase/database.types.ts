@@ -205,6 +205,49 @@ export type Database = {
           },
         ];
       };
+      listing_promotions: {
+        Row: {
+          expires_at: string;
+          priority: number;
+          property_id: string;
+          reason: string;
+          updated_at: string;
+          updated_by: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          expires_at: string;
+          priority: number;
+          property_id: string;
+          reason: string;
+          updated_at?: string;
+          updated_by: string;
+        };
+        Update: {
+          expires_at?: string;
+          priority?: number;
+          property_id?: string;
+          reason?: string;
+          updated_at?: string;
+          updated_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "listing_promotions_property_id_fkey";
+            columns: ["property_id"];
+            isOneToOne: true;
+            referencedRelation: "properties";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "listing_promotions_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profile_contacts: {
         Row: {
           phone: string | null;
@@ -768,6 +811,10 @@ export type Database = {
       };
       edit_property_photo: { Args: { p_action: string; p_photo_id: string }; Returns: string };
       end_allocation: { Args: { p_allocation_id: string; p_end_date: string }; Returns: undefined };
+      get_featured_listings: {
+        Args: { p_property_ids: string[] };
+        Returns: { property_id: string }[];
+      };
       get_listing_covers: {
         Args: { p_property_ids: string[] };
         Returns: {
@@ -934,6 +981,10 @@ export type Database = {
           slug: string;
           title: string;
         }[];
+      };
+      set_listing_promotion: {
+        Args: { p_expires_at: string; p_priority: number; p_property_id: string; p_reason: string };
+        Returns: undefined;
       };
       submit_booking: {
         Args: {

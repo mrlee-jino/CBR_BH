@@ -1,13 +1,14 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/navigation-link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ArrowUpRight, House, Menu, X } from "lucide-react";
 
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const toggle = useRef<HTMLButtonElement>(null);
   const links = [
     { href: "/properties", label: "Find a home" },
     { href: "/#how-it-works", label: "How it works" },
@@ -39,7 +40,12 @@ export function SiteHeader() {
               <Link
                 key={link.href}
                 href={link.href}
-                aria-current={pathname === link.href ? "page" : undefined}
+                aria-current={
+                  pathname === link.href ||
+                  (link.href === "/properties" && pathname.startsWith("/properties/"))
+                    ? "page"
+                    : undefined
+                }
               >
                 {link.label}
               </Link>
@@ -49,6 +55,7 @@ export function SiteHeader() {
             Your account <ArrowUpRight size={16} aria-hidden="true" />
           </Link>
           <button
+            ref={toggle}
             type="button"
             className="icon-button mobile-toggle"
             aria-label={open ? "Close navigation" : "Open navigation"}
@@ -64,6 +71,12 @@ export function SiteHeader() {
             id="mobile-navigation"
             className="mobile-nav container"
             aria-label="Mobile navigation"
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                setOpen(false);
+                toggle.current?.focus();
+              }
+            }}
           >
             {links.map((link) => (
               <Link key={link.href} href={link.href} onClick={() => setOpen(false)}>

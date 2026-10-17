@@ -1,3 +1,4 @@
+import { confirmAction } from "../helpers/confirm-action";
 import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { randomUUID } from "node:crypto";
@@ -76,7 +77,7 @@ test("owner creates a property and room, admin reviews it, and renters see only 
     await expect(page).toHaveURL(/\/owner\/properties\/[a-f0-9-]+$/);
     const manageUrl = page.url();
     const id = manageUrl.split("/").pop()!;
-    await page.getByRole("button", { name: "Submit for review", exact: true }).click();
+    await confirmAction(page, "Submit for review");
     await expect(page.getByRole("main").getByRole("alert")).toContainText(
       "at least one active room",
     );
@@ -145,10 +146,10 @@ test("owner creates a property and room, admin reviews it, and renters see only 
     await expect(publicPage.getByRole("heading", { level: 1 })).toHaveText(
       "This space isn’t here.",
     );
-    await page.getByRole("button", { name: "Submit for review", exact: true }).click();
+    await confirmAction(page, "Submit for review");
     await expect(page.getByText(/Status: pending review/)).toBeVisible();
     await expect(page.getByRole("button", { name: "Save property", exact: true })).toHaveCount(0);
-    await page.getByRole("button", { name: "Sign out", exact: true }).click();
+    await confirmAction(page, "Sign out");
     await signIn(page, adminEmail, password, "/admin");
     await expect(page).toHaveURL(/\/dashboard\/security$/);
     await page.getByRole("button", { name: "Set up an authenticator" }).click();
@@ -164,22 +165,36 @@ test("owner creates a property and room, admin reviews it, and renters see only 
     await page
       .getByLabel("Review notes")
       .fill("Verified contact and property details for publication.");
-    await page.getByRole("button", { name: "Save review", exact: true }).click();
+    await confirmAction(page, "Save review");
     await expect(page.getByRole("main").getByRole("alert")).toContainText(
       "Review every pending photo",
     );
     await page
       .getByLabel("Photo review note", { exact: true })
       .fill("Clear photo of the property; no personal documents visible.");
-    await page.getByRole("button", { name: "Save photo review", exact: true }).click();
+    await confirmAction(page, "Save photo review");
     await expect(page.getByText("approved", { exact: true }).first()).toBeVisible();
     await page
       .getByLabel("Review notes", { exact: true })
       .fill("Verified contact and property details for publication.");
-    await page.getByRole("button", { name: "Save review", exact: true }).click();
+    await confirmAction(page, "Save review");
     await expect(page.getByText("published", { exact: true }).first()).toBeVisible();
+    await page.getByLabel("Featured priority (0 removes placement)").fill("80");
+    await page
+      .getByLabel("Featured through (Philippine date)")
+      .fill(new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10));
+    await page
+      .getByLabel("Placement reason or agreement reference")
+      .fill("Synthetic featured placement agreement.");
+    await confirmAction(page, "Save featured placement");
+    await expect(
+      page.getByRole("status").filter({ hasText: "Featured placement saved" }),
+    ).toBeVisible();
     await publicPage.goto(`/properties?q=${token}&type=bedspace&max=3000`);
     await expect(publicPage.getByTestId("listing-card")).toHaveCount(1);
+    await expect(
+      publicPage.getByTestId("listing-card").getByText("Featured · Promoted", { exact: true }),
+    ).toBeVisible();
     await publicPage.getByRole("link", { name: `Test Garden ${token}`, exact: true }).click();
     await expect(publicPage.getByRole("heading", { level: 1 })).toHaveText(`Test Garden ${token}`);
     await expect(publicPage.getByText("Room A · Bed 1", { exact: true })).toBeVisible();
@@ -205,7 +220,7 @@ test("owner creates a property and room, admin reviews it, and renters see only 
       path: testInfo.outputPath("published-property.png"),
       fullPage: true,
     });
-    await page.getByRole("button", { name: "Sign out", exact: true }).click();
+    await confirmAction(page, "Sign out");
     await signIn(page, email, password);
     await expect(page).toHaveURL(/\/owner$/);
     await page.goto(manageUrl);
@@ -213,14 +228,14 @@ test("owner creates a property and room, admin reviews it, and renters see only 
       page.getByText("Verified contact and property details for publication.", { exact: true }),
     ).toBeVisible();
     await page.getByLabel("Property name", { exact: true }).fill(`Updated Garden ${token}`);
-    await page.getByRole("button", { name: "Save property", exact: true }).click();
+    await confirmAction(page, "Save property");
     await expect(page.getByText(/Status: paused/)).toBeVisible();
     await publicPage.goto(`/properties/garden-${token}`);
     await expect(publicPage.getByRole("heading", { level: 1 })).toHaveText(
       "This space isn’t here.",
     );
     expect((await publicPage.request.get(photoPath!)).status()).toBe(404);
-    await page.getByRole("button", { name: "Remove photo", exact: true }).click();
+    await confirmAction(page, "Remove photo");
     await expect(
       page.getByRole("img", { name: "Room A with study area", exact: true }),
     ).toHaveCount(0);

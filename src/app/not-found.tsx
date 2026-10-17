@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/ui/navigation-link";
 import { ArrowLeft, House } from "lucide-react";
 
 export default function NotFound() {

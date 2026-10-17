@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/ui/navigation-link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { requireAccount } from "@/features/auth/account";
@@ -62,7 +62,10 @@ export default async function RequestDetail({
           | undefined)
       : undefined;
   return (
-    <DashboardShell title={`${row.kind === "booking" ? "Booking" : "Viewing"} request`}>
+    <DashboardShell
+      title={`${row.kind === "booking" ? "Booking" : "Viewing"} request`}
+      workspace={owner ? "owner" : "renter"}
+    >
       <Link className="back-link" href={owner ? "/owner/requests" : "/dashboard/requests"}>
         ← Back to requests
       </Link>

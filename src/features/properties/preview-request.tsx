@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import Link from "next/link";
+import Link from "@/components/ui/navigation-link";
 import { ArrowRight, CalendarDays, Sprout, X } from "lucide-react";
 
 export function PreviewRequest({ propertyName }: { propertyName: string }) {

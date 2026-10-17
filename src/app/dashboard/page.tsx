@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/ui/navigation-link";
 import { requireAccount } from "@/features/auth/account";
 import { DashboardShell } from "@/features/auth/dashboard-shell";
 
@@ -21,15 +21,15 @@ export default async function Dashboard() {
       ) : (
         <>
           <p className="page-lead">
-            Your email is verified. Your account can grow with you as a renter and a property owner.
+            Find a home you like, arrange a viewing, and track your requests here.
           </p>
           <div className="preview-info-grid">
             <section className="info-card">
-              <span className="eyebrow">YOUR WORKSPACES</span>
-              <h2>One account, your next chapter.</h2>
+              <span className="eyebrow">YOUR NEXT HOME</span>
+              <h2>Start with a place you like.</h2>
               <p>
-                Current roles: {account.roles.join(", ")}. Public search shows admin-reviewed
-                property listings.
+                Browse published rentals and compare rooms, monthly prices, and terms. Sign-in is
+                only needed when you send a request.
               </p>
               <Link className="text-link" href="/properties">
                 Explore rentals →
@@ -50,11 +50,11 @@ export default async function Dashboard() {
               )}
             </section>
             <section className="info-card">
-              <span className="eyebrow">KEEP YOUR ACCOUNT READY</span>
-              <h2>A few everyday essentials.</h2>
+              <span className="eyebrow">YOUR REQUESTS</span>
+              <h2>Keep your plans in one place.</h2>
               <p>
-                Manage your private profile, set up an authenticator, or activate owner access.
-                Track your viewing and booking requests in your request inbox.
+                Check viewing appointments and booking decisions. Keep your profile name and phone
+                number up to date so owners can reach you after you consent.
               </p>
               <Link className="text-link" href="/dashboard/settings">
                 Edit your profile →

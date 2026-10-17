@@ -13,6 +13,7 @@ function publicClient() {
 export type PublicPhoto = Database["public"]["Functions"]["get_property_photos"]["Returns"][number];
 export type Listing = Database["public"]["Functions"]["get_public_listing"]["Returns"][number] & {
   cover?: PublicPhoto;
+  featured?: boolean;
 };
 export async function findListings(
   args: Database["public"]["Functions"]["search_listings"]["Args"],
@@ -20,12 +21,21 @@ export async function findListings(
   const { data, error } = await publicClient().rpc("search_listings", args);
   if (error) throw new Error("Could not load published listings.");
   if (!data.length) return [];
-  const covers = await publicClient().rpc("get_listing_covers", {
-    p_property_ids: data.map((p) => p.id),
-  });
+  const [covers, featured] = await Promise.all([
+    publicClient().rpc("get_listing_covers", { p_property_ids: data.map((p) => p.id) }),
+    publicClient().rpc("get_featured_listings", { p_property_ids: data.map((p) => p.id) }),
+  ]);
   if (covers.error) throw new Error("Could not load listing photos.");
+  // Keep guest browsing available during rollout before the additive feature RPC exists.
+  if (featured.error && featured.error.code !== "PGRST202")
+    throw new Error("Could not load featured placement labels.");
   const byProperty = new Map(covers.data.map((photo) => [photo.property_id, photo]));
-  return data.map((property) => ({ ...property, cover: byProperty.get(property.id) }));
+  const promoted = new Set((featured.data ?? []).map((p) => p.property_id));
+  return data.map((property) => ({
+    ...property,
+    cover: byProperty.get(property.id),
+    featured: promoted.has(property.id),
+  }));
 }
 export const getListing = cache(async (slug: string) => {
   const client = publicClient();

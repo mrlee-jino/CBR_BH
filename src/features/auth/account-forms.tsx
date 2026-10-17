@@ -1,4 +1,5 @@
 "use client";
+import { ActionButton } from "@/components/ui/action-button";
 
 import { useActionState } from "react";
 import { activateOwner, saveProfile } from "./actions";
@@ -41,9 +42,9 @@ export function ProfileForm({ name, phone }: { name: string; phone: string }) {
           {state.message}
         </p>
       )}
-      <button type="submit" className="button" disabled={pending}>
+      <ActionButton type="submit" className="button" pending={pending}>
         {pending ? "Saving…" : "Save profile"}
-      </button>
+      </ActionButton>
     </form>
   );
 }
@@ -56,8 +57,7 @@ export function OwnerForm() {
         <input type="checkbox" name="consent" required />
         <span>
           I will provide accurate listing details, record off-platform occupancy, and submit
-          listings for admin review before publication. I understand that property management
-          screens are still being built.
+          listings for admin review before publication.
         </span>
       </label>
       {state.message && (
@@ -65,9 +65,9 @@ export function OwnerForm() {
           {state.message}
         </p>
       )}
-      <button className="button" disabled={pending}>
+      <ActionButton className="button" pending={pending}>
         {pending ? "Activating…" : "Activate owner access"}
-      </button>
+      </ActionButton>
     </form>
   );
 }

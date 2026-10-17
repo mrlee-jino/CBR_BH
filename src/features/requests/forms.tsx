@@ -1,4 +1,5 @@
 "use client";
+import { ActionButton } from "@/components/ui/action-button";
 
 import { useActionState, useState } from "react";
 import { submitRequest, decideRequest, type RequestState } from "./actions";
@@ -126,13 +127,13 @@ export function RequestForm({
         </span>
       </label>
       <Feedback state={state} />
-      <button className="button" disabled={pending}>
+      <ActionButton className="button" pending={pending}>
         {pending
           ? "Sending request…"
           : kind === "booking"
             ? "Send booking request"
             : "Send viewing request"}
-      </button>
+      </ActionButton>
     </form>
   );
 }
@@ -178,15 +179,29 @@ export function DecisionForm({
       <Feedback state={state} />
       <div className="request-actions">
         {decisions.map((d) => (
-          <button
+          <ActionButton
             className="button button-outline"
             name="decision"
             value={d}
+            confirmation={{
+              title: `${labels[d]}?`,
+              description:
+                d === "approved"
+                  ? "This reserves the unit for the displayed dates and agreed monthly terms. Check the request before approving."
+                  : d === "accepted"
+                    ? "This confirms the viewing appointment and releases property contact details to the renter."
+                    : d === "cancelled"
+                      ? "The confirmation will be cancelled and your reason shared with the other participant. A cancelled booking releases its reservation."
+                      : d === "withdrawn"
+                        ? "This pending request will be withdrawn. You can submit a new request later."
+                        : "This decision will update the request and be visible to the other participant.",
+              confirmLabel: labels[d],
+            }}
             key={d}
-            disabled={pending}
+            pending={pending}
           >
             {pending ? "Saving…" : labels[d]}
-          </button>
+          </ActionButton>
         ))}
       </div>
     </form>

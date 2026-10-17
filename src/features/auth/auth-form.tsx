@@ -1,7 +1,8 @@
 "use client";
+import { ActionButton } from "@/components/ui/action-button";
 
-import Link from "next/link";
-import { useActionState } from "react";
+import Link from "@/components/ui/navigation-link";
+import { useActionState, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { forgotPassword, login, resetPassword, signup, resendConfirmation } from "./actions";
 
@@ -15,6 +16,7 @@ const actions = {
 };
 export function AuthForm({ mode, next = "/dashboard" }: { mode: Mode; next?: string }) {
   const [state, action, pending] = useActionState(actions[mode], {});
+  const [accountType, setAccountType] = useState("");
   const buttons = {
     signup: "Create account",
     login: "Sign in",
@@ -25,6 +27,45 @@ export function AuthForm({ mode, next = "/dashboard" }: { mode: Mode; next?: str
   return (
     <form action={action} className="auth-form">
       <input type="hidden" name="next" value={next} />
+      {mode === "signup" && (
+        <fieldset className="account-type-choices">
+          <legend>I’m joining as a…</legend>
+          <label>
+            <input
+              type="radio"
+              name="account_type"
+              value="renter"
+              required
+              checked={accountType === "renter"}
+              onChange={() => setAccountType("renter")}
+            />
+            <span>
+              <strong>Renter</strong>
+              <small>Find a home and manage viewing and booking requests.</small>
+            </span>
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="account_type"
+              value="owner"
+              required
+              checked={accountType === "owner"}
+              onChange={() => setAccountType("owner")}
+            />
+            <span>
+              <strong>Property owner</strong>
+              <small>List properties and manage rental requests.</small>
+            </span>
+          </label>
+          {accountType === "owner" && (
+            <p className="field-help">
+              After verifying your email, complete the owner responsibilities step to open your
+              property workspace.
+            </p>
+          )}
+        </fieldset>
+      )}
       {mode === "signup" && (
         <div className="field">
           <label htmlFor="display_name">Your name</label>
@@ -89,8 +130,9 @@ export function AuthForm({ mode, next = "/dashboard" }: { mode: Mode; next?: str
         <label className="check-label">
           <input type="checkbox" name="terms" required />
           <span>
-            I understand that property discovery currently uses sample listings and that account
-            details are stored in Supabase. <Link href="/preview">Read the account notice.</Link>
+            I agree to the account notice and consent to storing my account details. Browsing
+            listings is free and does not require an account.{" "}
+            <Link href="/preview">Read the account notice.</Link>
           </span>
         </label>
       )}
@@ -102,10 +144,10 @@ export function AuthForm({ mode, next = "/dashboard" }: { mode: Mode; next?: str
           {state.message}
         </p>
       )}
-      <button type="submit" className="button" disabled={pending}>
+      <ActionButton type="submit" className="button" pending={pending}>
         {pending ? "Please wait…" : buttons[mode]}
         <ArrowRight size={17} aria-hidden="true" />
-      </button>
+      </ActionButton>
       {mode === "login" && (
         <Link href="/forgot-password" className="text-link">
           Forgot your password?

@@ -37,3 +37,11 @@ writeFileSync(
   "supabase/upgrade-requests.sql",
   `-- Existing PuyoHub projects with the core, listing, and photo migrations applied. Run once.\nbegin;\n${requests}\ncommit;\n`,
 );
+const experience = parts.find((part) =>
+  part.includes("_account_experience_and_featured_listings.sql"),
+);
+if (!experience) throw new Error("Account experience migration is missing.");
+writeFileSync(
+  "supabase/upgrade-experience.sql",
+  `-- Apply after the core, listing, photo, and request upgrades. Run once.\nbegin;\n${experience}\ncommit;\n`,
+);

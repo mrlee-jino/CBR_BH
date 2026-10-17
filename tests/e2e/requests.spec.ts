@@ -1,3 +1,4 @@
+import { confirmAction } from "../helpers/confirm-action";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { randomUUID } from "node:crypto";
@@ -125,20 +126,20 @@ test("renters request, owners decide, contacts stay private, and competing booki
     ).toBeVisible();
     await ownerPage.goto(bookingUrl);
     await expect(ownerPage.getByText("09987654321", { exact: true })).toBeVisible();
-    await ownerPage.getByRole("button", { name: "Approve booking", exact: true }).click();
+    await confirmAction(ownerPage, "Approve booking");
     await expect(ownerPage.getByText("approved", { exact: true })).toBeVisible();
     await ownerPage.goto(competingUrl);
-    await ownerPage.getByRole("button", { name: "Approve booking", exact: true }).click();
+    await confirmAction(ownerPage, "Approve booking");
     await expect(ownerPage.getByRole("main").getByRole("alert")).toContainText("overlap");
     await expect(ownerPage.getByText("pending", { exact: true })).toBeVisible();
-    await ownerPage.getByRole("button", { name: "Reject booking", exact: true }).click();
+    await confirmAction(ownerPage, "Reject booking");
     await expect(ownerPage.getByText("rejected", { exact: true })).toBeVisible();
     await page.reload();
     await expect(page.getByText("Private request address 789", { exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "Cancel confirmation", exact: true }).click();
+    await confirmAction(page, "Cancel confirmation");
     await expect(page.getByRole("main").getByRole("alert")).toContainText("cancellation reason");
     await page.getByLabel("Decision reason (required for cancellation)").fill("My plans changed");
-    await page.getByRole("button", { name: "Cancel confirmation", exact: true }).click();
+    await confirmAction(page, "Cancel confirmation");
     await expect(page.getByText("cancelled", { exact: true })).toBeVisible();
     await expect(page.getByText("Private request address 789", { exact: true })).toHaveCount(0);
     await page.goto(`/properties/${slug}/request?kind=viewing`);
@@ -150,7 +151,7 @@ test("renters request, owners decide, contacts stay private, and competing booki
     const viewingUrl = page.url();
     await expect(page.getByText("Private request address 789", { exact: true })).toHaveCount(0);
     await ownerPage.goto(viewingUrl);
-    await ownerPage.getByRole("button", { name: "Accept viewing", exact: true }).click();
+    await confirmAction(ownerPage, "Accept viewing");
     await expect(ownerPage.getByText("accepted", { exact: true })).toBeVisible();
     await page.reload();
     await expect(page.getByText("Private request address 789", { exact: true })).toBeVisible();
@@ -166,7 +167,7 @@ test("renters request, owners decide, contacts stay private, and competing booki
         .violations,
     ).toEqual([]);
     await page.getByLabel("Decision reason (required for cancellation)").fill("Need another time");
-    await page.getByRole("button", { name: "Cancel confirmation", exact: true }).click();
+    await confirmAction(page, "Cancel confirmation");
     await expect(page.getByText("cancelled", { exact: true })).toBeVisible();
     await expect(page.getByText("Private request address 789", { exact: true })).toHaveCount(0);
     await page.goto("/dashboard/requests");

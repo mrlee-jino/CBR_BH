@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/ui/navigation-link";
 import { AuthForm } from "@/features/auth/auth-form";
 import { AuthShell } from "@/features/auth/auth-shell";
 import { safeNext } from "@/features/auth/redirect";

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { PageTransition } from "@/components/ui/page-transition";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -19,7 +20,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         </a>
         <SiteHeader />
         <main id="main-content" tabIndex={-1}>
-          {children}
+          <PageTransition>{children}</PageTransition>
         </main>
         <SiteFooter />
       </body>

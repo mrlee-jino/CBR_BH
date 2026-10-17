@@ -17,7 +17,14 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(params.get("code")!);
     failed = Boolean(error);
   }
-  const next = type === "recovery" ? "/reset-password" : safeNext(params.get("next"));
+  let next = type === "recovery" ? "/reset-password" : safeNext(params.get("next"));
+  if (!failed && type !== "recovery" && !params.get("next")) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    // An editable preference may guide onboarding; it never grants a capability.
+    if (user?.user_metadata.signup_intent === "owner") next = "/become-an-owner";
+  }
   const response = NextResponse.redirect(
     new URL(failed ? "/login?message=invalid-link" : next, origin),
   );

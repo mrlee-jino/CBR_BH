@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/ui/navigation-link";
 import { notFound } from "next/navigation";
 import { randomUUID } from "node:crypto";
 import { requireAccount } from "@/features/auth/account";

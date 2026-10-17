@@ -24,18 +24,20 @@ export async function signup(previous: AuthState, form: FormData): Promise<AuthS
       email: emailSchema,
       password: passwordSchema,
       display_name: z.string().trim().min(2).max(80),
+      account_type: z.enum(["renter", "owner"]),
       terms: z.literal("on"),
     })
     .safeParse({
       email: emailValue(form),
       password: form.get("password"),
       display_name: form.get("display_name"),
+      account_type: form.get("account_type"),
       terms: form.get("terms"),
     });
   if (!data.success)
     return {
       message:
-        "Enter your name, a valid email, a password of 12–128 characters, and accept the account notice.",
+        "Choose Renter or Property owner, enter your name, a valid email and a password of 12–128 characters, and accept the account notice.",
     };
   try {
     const supabase = await createClient();
@@ -43,7 +45,8 @@ export async function signup(previous: AuthState, form: FormData): Promise<AuthS
       email: data.data.email,
       password: data.data.password,
       options: {
-        data: { display_name: data.data.display_name },
+        // Navigation preference only. Owner access is granted solely by activate_owner.
+        data: { display_name: data.data.display_name, signup_intent: data.data.account_type },
         emailRedirectTo: `${siteOrigin()}/auth/confirm`,
       },
     });
@@ -70,6 +73,7 @@ export async function login(previous: AuthState, form: FormData): Promise<AuthSt
   const password = z.string().min(1).max(128).safeParse(form.get("password"));
   if (!email.success || !password.success)
     return { message: "Enter a valid email and your password." };
+  let destination = safeNext(form.get("next"));
   try {
     const supabase = await createClient();
     const { error } = await supabase.auth.signInWithPassword({
@@ -96,11 +100,16 @@ export async function login(previous: AuthState, form: FormData): Promise<AuthSt
       await supabase.auth.signOut();
       return { message: "Your account is suspended. Contact platform support for help." };
     }
+    if (destination === "/dashboard") {
+      const roles = await supabase.from("account_roles").select("role").eq("user_id", user.id);
+      if (roles.data?.some((r) => r.role === "owner")) destination = "/owner";
+      else if (user.user_metadata.signup_intent === "owner") destination = "/become-an-owner";
+    }
   } catch {
     return unavailable;
   }
   revalidatePath("/dashboard", "layout");
-  redirect(safeNext(form.get("next")));
+  redirect(destination);
 }
 
 export async function forgotPassword(previous: AuthState, form: FormData): Promise<AuthState> {

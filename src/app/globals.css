@@ -3020,3 +3020,241 @@ body:has(dialog[open]) {
   padding-top: 16px;
   margin-top: 24px;
 }
+.ui-spinner {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: ui-spin 700ms linear infinite;
+}
+.page-spinner {
+  width: 2rem;
+  height: 2rem;
+  color: var(--purple, #755096);
+  margin-bottom: 1rem;
+}
+.button[aria-busy="true"] {
+  cursor: wait;
+}
+.button {
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+.button:not(:disabled):active {
+  transform: translateY(1px);
+}
+.confirmation-dialog {
+  width: min(calc(100% - 2rem), 28rem);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  margin: auto;
+  padding: 1.75rem;
+  border: 1px solid #e6dcf2;
+  border-radius: 1.25rem;
+  color: var(--ink);
+  background: #fdfbff;
+  box-shadow: 0 24px 80px #30263f33;
+}
+.confirmation-dialog[open] {
+  animation: dialog-enter 180ms ease-out;
+}
+.confirmation-dialog::backdrop {
+  background: #24133180;
+  animation: backdrop-enter 180ms ease-out;
+}
+.confirmation-dialog h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+}
+.confirmation-dialog p {
+  color: #61536f;
+  line-height: 1.65;
+}
+.confirmation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+.confirmation-actions .button {
+  min-height: 44px;
+}
+.page-transition {
+  animation: page-enter 220ms ease-out;
+}
+.navigation-link {
+  position: relative;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease;
+}
+.navigation-hint {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  pointer-events: none;
+  opacity: 0;
+  background: currentColor;
+  transform-origin: left;
+}
+.navigation-hint.is-pending {
+  animation: navigation-pulse 900ms ease-in-out 120ms infinite;
+}
+.account-nav a[aria-current="page"] {
+  background: #eee4f7;
+  color: #56326f;
+  box-shadow: inset 0 -2px #8b65ab;
+}
+.desktop-nav a::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 180ms ease;
+}
+.desktop-nav a:hover::after,
+.desktop-nav a[aria-current="page"]::after {
+  transform: scaleX(1);
+}
+.mobile-nav {
+  animation: page-enter 180ms ease-out;
+}
+.mobile-nav a svg {
+  transition: transform 160ms ease;
+}
+.mobile-nav a:hover svg {
+  transform: translate(2px, -2px);
+}
+@keyframes ui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes page-enter {
+  from {
+    opacity: 0.5;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes dialog-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes backdrop-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes navigation-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scaleX(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-spinner,
+  .page-transition,
+  .confirmation-dialog[open],
+  .confirmation-dialog::backdrop,
+  .mobile-nav,
+  .navigation-hint.is-pending {
+    animation: none;
+  }
+  .navigation-hint.is-pending {
+    opacity: 1;
+  }
+  .button,
+  .navigation-link,
+  .desktop-nav a::after,
+  .mobile-nav a svg {
+    transition: none;
+  }
+  .button:not(:disabled):active,
+  .mobile-nav a:hover svg {
+    transform: none;
+  }
+}
+.account-type-choices {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+.account-type-choices legend {
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+.account-type-choices label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 1rem;
+  border: 1px solid #ddd2e9;
+  border-radius: 0.8rem;
+  cursor: pointer;
+}
+.account-type-choices label:has(input:checked) {
+  border-color: #7b52a1;
+  background: #f3ecfa;
+  box-shadow: 0 0 0 1px #7b52a1;
+}
+.account-type-choices label:focus-within {
+  outline: 2px solid #7b52a1;
+  outline-offset: 3px;
+}
+.account-type-choices input {
+  margin-top: 0.3rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 auto;
+}
+.account-type-choices small {
+  display: block;
+  color: #63566f;
+  margin-top: 0.3rem;
+  line-height: 1.5;
+}
+.promotion-badge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  margin-bottom: 0.6rem;
+  border: 1px solid #c3afd6;
+  border-radius: 0.4rem;
+  background: #f1e8fa;
+  color: #583278;
+  font-size: 0.75rem;
+  font-weight: 700;
+}

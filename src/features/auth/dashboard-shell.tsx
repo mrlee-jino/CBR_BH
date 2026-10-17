@@ -1,7 +1,18 @@
-import Link from "next/link";
+import { currentAccount } from "./account";
+import { AccountNav } from "./account-nav";
 import { signout } from "./actions";
+import { ActionButton } from "@/components/ui/action-button";
 
-export function DashboardShell({ title, children }: { title: string; children: React.ReactNode }) {
+export async function DashboardShell({
+  title,
+  children,
+  workspace,
+}: {
+  title: string;
+  children: React.ReactNode;
+  workspace?: "renter" | "owner" | "admin";
+}) {
+  const account = await currentAccount();
   return (
     <section className="container account-page">
       <div className="account-heading">
@@ -10,18 +21,21 @@ export function DashboardShell({ title, children }: { title: string; children: R
           <h1>{title}</h1>
         </div>
         <form action={signout}>
-          <button className="button button-outline">Sign out</button>
+          <ActionButton
+            className="button button-outline"
+            pendingLabel="Signing out…"
+            confirmation={{
+              title: "Sign out of PuyoHub?",
+              description:
+                "You’ll need to sign in again to manage properties and requests. Unsaved changes on this page will be lost.",
+              confirmLabel: "Sign out",
+            }}
+          >
+            Sign out
+          </ActionButton>
         </form>
       </div>
-      <nav className="account-nav" aria-label="Account navigation">
-        <Link href="/dashboard">Overview</Link>
-        <Link href="/dashboard/requests">My requests</Link>
-        <Link href="/dashboard/settings">Profile</Link>
-        <Link href="/dashboard/security">Security</Link>
-        <Link href="/become-an-owner">Owner access</Link>
-        <Link href="/owner">My properties</Link>
-        <Link href="/owner/requests">Owner requests</Link>
-      </nav>
+      <AccountNav roles={account?.roles ?? []} workspace={workspace} />
       {children}
     </section>
   );

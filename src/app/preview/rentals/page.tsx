@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/ui/navigation-link";
 import { ArrowRight, Info, SearchX, SlidersHorizontal } from "lucide-react";
 import { PropertyCard } from "@/features/properties/property-card";
 import { SearchFilters } from "@/features/properties/search-form";
