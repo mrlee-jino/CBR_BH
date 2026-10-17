@@ -240,5 +240,10 @@ test("an unverified account can request and use a fresh confirmation email", asy
   ).toBeVisible();
   await page.goto(await emailLink(email));
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByText("Your email is verified.", { exact: false })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome,");
+  await expect(
+    page
+      .getByRole("navigation", { name: "Account navigation" })
+      .getByRole("link", { name: "My requests", exact: true }),
+  ).toBeVisible();
 });

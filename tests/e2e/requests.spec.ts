@@ -26,7 +26,7 @@ test("renters request, owners decide, contacts stay private, and competing booki
   const token = randomUUID();
   const password = `Puyo-requests-${token}!`;
   const accounts = [];
-  for (const role of ["owner", "renter", "other"]) {
+  for (const role of ["owner", "renter", "other", "reviewer"]) {
     const email = `${role}-${token}@example.test`;
     const result = await service.auth.admin.createUser({
       email,
@@ -37,7 +37,7 @@ test("renters request, owners decide, contacts stay private, and competing booki
     expect(result.error).toBeNull();
     accounts.push({ email, id: result.data.user!.id });
   }
-  const [owner, renter, other] = accounts;
+  const [owner, renter, other, reviewer] = accounts;
   const property = randomUUID();
   const unit = randomUUID();
   const slug = `requests-${token}`;
@@ -45,10 +45,13 @@ test("renters request, owners decide, contacts stay private, and competing booki
   const db = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL });
   await db.connect();
   try {
-    await db.query("insert into public.account_roles(user_id,role) values($1,'owner')", [owner.id]);
     await db.query(
-      "insert into public.properties(id,owner_id,slug,title,description,property_type,barangay,status) values($1,$2,$3,$4,'A quiet test rental with clear monthly terms.','boarding_house','Caasinan','published')",
-      [property, owner.id, slug, title],
+      "insert into public.account_roles(user_id,role) values($1,'owner'),($2,'admin')",
+      [owner.id, reviewer.id],
+    );
+    await db.query(
+      "insert into public.properties(id,owner_id,slug,title,description,property_type,barangay,status,verified_at,verified_by) values($1,$2,$3,$4,'A quiet test rental with clear monthly terms.','boarding_house','Caasinan','published',now(),$5)",
+      [property, owner.id, slug, title, reviewer.id],
     );
     await db.query(
       "insert into public.property_private_details(property_id,street_address,contact_name,contact_phone) values($1,'Private request address 789','Request Owner','09123456789')",

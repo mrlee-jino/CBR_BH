@@ -30,8 +30,8 @@ export default function PreviewPage() {
           </p>
           <p>
             Public search shows approved owner listings. A separate demo contains fictional
-            properties and concept artwork. Listings do not guarantee vacancies; booking requests
-            and payments are not available yet.
+            properties and concept artwork. Listings do not guarantee vacancies. Verified renters
+            can request viewings and monthly bookings; no payments are collected here.
           </p>
           <Link href="/preview/rentals" className="text-link">
             Explore the sample rentals <ArrowRight size={17} aria-hidden="true" />
@@ -41,9 +41,9 @@ export default function PreviewPage() {
           <Sprout size={29} strokeWidth={1.4} aria-hidden="true" />
           <h2>What comes next</h2>
           <p>
-            Viewing requests and booking interfaces come next. Photo uploads are validated and
-            reviewed before public display. Owners can already manage rooms, monthly prices, and
-            rental terms.
+            Owners can review viewing and booking requests, alongside rooms, monthly prices, and
+            rental terms. Photo uploads are validated and reviewed before public display.
+            Availability management is the next development milestone.
           </p>
           <p>
             A pending request won’t reserve a unit. Only an owner-approved booking will hold it.

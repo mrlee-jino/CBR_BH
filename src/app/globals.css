@@ -2581,6 +2581,7 @@ body:has(dialog[open]) {
   }
   .info-card p {
     font-size: 12px;
+    color: #63596f;
   }
   .owners-info {
     flex-direction: column;
