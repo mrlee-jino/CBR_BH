@@ -813,7 +813,9 @@ export type Database = {
       end_allocation: { Args: { p_allocation_id: string; p_end_date: string }; Returns: undefined };
       get_featured_listings: {
         Args: { p_property_ids: string[] };
-        Returns: { property_id: string }[];
+        Returns: {
+          property_id: string;
+        }[];
       };
       get_listing_covers: {
         Args: { p_property_ids: string[] };
