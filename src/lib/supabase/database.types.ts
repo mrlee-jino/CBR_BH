@@ -793,7 +793,7 @@ export type Database = {
       };
       create_manual_allocation: {
         Args: {
-          p_end_date: string | null;
+          p_end_date: string;
           p_kind: string;
           p_note?: string;
           p_start_date: string;

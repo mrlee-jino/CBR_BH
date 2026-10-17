@@ -92,7 +92,8 @@ export async function createAllocation(
   const { error } = await client.rpc("create_manual_allocation", {
     p_unit_id: data.unitId,
     p_start_date: data.startDate,
-    p_end_date: data.endDate || null,
+    // The generated RPC type omits SQL parameter nullability; NULL means an open-ended allocation.
+    p_end_date: (data.endDate || null) as unknown as string,
     p_kind: data.kind,
     p_note: data.note,
   });
