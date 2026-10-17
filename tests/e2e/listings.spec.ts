@@ -122,9 +122,9 @@ test("owner creates a property and room, admin reviews it, and renters see only 
     await page.getByLabel("End date (optional)").fill(dateIn(65));
     await page.getByLabel("Private note (optional)").fill("Test maintenance block");
     await page.getByRole("button", { name: "Save availability", exact: true }).click();
-    await expect(
-      page.getByRole("status").filter({ hasText: "Maintenance block saved" }),
-    ).toBeVisible();
+    await expect(page.locator("#availability form.auth-form .form-message")).toContainText(
+      "Maintenance block saved",
+    );
     const maintenance = page.locator("article.account-card").filter({
       hasText: "Test maintenance block",
     });

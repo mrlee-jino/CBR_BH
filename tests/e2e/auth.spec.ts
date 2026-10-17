@@ -81,7 +81,7 @@ test("signup, email confirmation, profile, owner activation, logout and recovery
   await expect(page).toHaveURL(/\/dashboard$/);
   const signout = page.getByRole("button", { name: "Sign out", exact: true });
   await signout.click();
-  const dialog = page.getByRole("dialog", { name: "Sign out of PuyoHub?" });
+  const dialog = page.getByRole("dialog", { name: "Sign out of Cabahay?" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Cancel", exact: true })).toBeFocused();
   expect(
