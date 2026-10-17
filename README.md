@@ -8,7 +8,7 @@ The app includes owner property/room forms, admin review with MFA, and public se
 
 Signup now offers **Renter** and **Property owner**, with simpler renter navigation and a separate owner workspace. Guest browsing needs no account. Admin-controlled, expiring featured placement is available after applying `supabase/upgrade-experience.sql`. See [administrator operation and setup](docs/admin-operations.md), including the separate `/admin/login` address and MFA requirements.
 
-Six fictional listings remain in a clearly separate demo at `/preview/rentals`. Public discovery never substitutes demo inventory for real listings. Secure photo processing and moderation, viewing/booking forms, renter request history, and owner request decisions are implemented. Maps and favorites UI remain future milestones; payments are outside this release. See the [system review](docs/system-review.md).
+Six fictional listings remain in a clearly separate demo at `/preview/rentals`. Public discovery never substitutes demo inventory for real listings. Secure photo processing and moderation, viewing/booking forms, renter request history, owner request decisions, and owner-managed walk-in occupancy and maintenance blocks are implemented. Maps and favorites UI remain future milestones; payments are outside this release. See the [system review](docs/system-review.md).
 
 The first release covers discovery, favorites, viewing requests, monthly booking requests, owner inventory management, and admin moderation. Online payments, subscriptions, rent accounting, and nightly stays are outside this release.
 
@@ -45,7 +45,7 @@ Routes:
 - `/become-an-owner`, `/owner`, `/owner/properties/new`, `/owner/properties/[id]` — owner activation, property drafts, rooms, offers, and review feedback.
 - `/admin`, `/admin/properties/[id]` — MFA-protected listing queues and review decisions.
 
-Live listings contain owner-provided details reviewed by admins. Offering a unit does not guarantee availability for particular dates. Owners can upload validated photos for admin review; listings without photos use labeled placeholders. Fictional artwork and decorative area diagrams are confined to the demo; demo and private account pages are excluded from indexing. Public listing pages are indexable. Verified renters can request viewings and monthly bookings; pending requests do not reserve inventory. See [request workspace setup](docs/viewing-booking.md).
+Live listings contain owner-provided details reviewed by admins. Offering a unit does not guarantee availability for particular dates. Owners can upload validated photos for admin review and track walk-in occupancy or maintenance blocks; listings without photos use labeled placeholders. Fictional artwork and decorative area diagrams are confined to the demo; demo and private account pages are excluded from indexing. Public listing pages are indexable. Verified renters can request viewings and monthly bookings; pending requests do not reserve inventory. See [request workspace setup](docs/viewing-booking.md) and [owner listing operations](docs/listing-workspaces.md).
 
 ## Validate
 

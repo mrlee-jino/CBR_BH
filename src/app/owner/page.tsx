@@ -40,6 +40,10 @@ export default async function Owner() {
               <Link className="text-link" href={`/owner/properties/${p.id}`}>
                 Manage property →
               </Link>
+              {" · "}
+              <Link className="text-link" href={`/owner/properties/${p.id}#availability`}>
+                Manage availability →
+              </Link>
             </article>
           ))
         ) : (
