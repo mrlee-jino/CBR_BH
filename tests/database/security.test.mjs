@@ -586,19 +586,141 @@ test("reports are private to the reporter/admin, and future blocks can only be r
   );
 });
 
+test("public listing search filters individual unit offers and never exposes private fields", async () => {
+  const target = await published(users.ownerA.client, `Search ${randomUUID()}`);
+  const slug = ok(
+    await users.ownerA.client.from("properties").select("slug").eq("id", target.id).single(),
+  ).slug;
+  ok(
+    await users.ownerA.client.rpc("save_unit", {
+      p_property_id: target.id,
+      p_unit_id: null,
+      p_label: "Private room",
+      p_unit_type: "private_room",
+      p_monthly_rent: 9000,
+      p_deposit_amount: 9000,
+      p_terms: "",
+    }),
+  );
+  assert.equal(
+    ok(await anon.rpc("get_public_listing", { p_slug: slug })).length,
+    0,
+    "Editing must remove publication immediately",
+  );
+  ok(await users.ownerA.client.rpc("submit_property", { p_property_id: target.id }));
+  const version = ok(
+    await users.ownerA.client.from("properties").select("version").eq("id", target.id).single(),
+  ).version;
+  ok(
+    await users.admin.client.rpc("review_listing", {
+      p_property_id: target.id,
+      p_expected_version: version,
+      p_decision: "published",
+      p_reason: "Property and contact independently checked",
+    }),
+  );
+  const filters = { p_query: slug, p_unit_type: "private_room", p_max: 3000 };
+  // Search by the exact title, not the slug (which is intentionally not indexed here).
+  const title = ok(
+    await users.ownerA.client.from("properties").select("title").eq("id", target.id).single(),
+  ).title;
+  assert.equal(
+    ok(await anon.rpc("search_listings", { ...filters, p_query: title })).length,
+    0,
+    "A cheap bed must not make an expensive room pass the budget",
+  );
+  const rows = ok(
+    await anon.rpc("search_listings", { p_query: title, p_unit_type: "private_room", p_min: 8000 }),
+  );
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].monthly_rent, 9000);
+  assert.deepEqual(
+    Object.keys(rows[0]).sort(),
+    [
+      "id",
+      "slug",
+      "title",
+      "description",
+      "property_type",
+      "barangay",
+      "city",
+      "monthly_rent",
+    ].sort(),
+  );
+  assert.equal(ok(await anon.rpc("get_public_listing", { p_slug: slug }))[0].id, target.id);
+  assert.equal(
+    ok(await users.ownerA.client.rpc("get_my_listing_reviews", { p_property_id: target.id }))[0]
+      .reason,
+    "Property and contact independently checked",
+  );
+  denied(await anon.rpc("get_my_listing_reviews", { p_property_id: target.id }));
+  denied(await users.ownerB.client.rpc("get_my_listing_reviews", { p_property_id: target.id }));
+  denied(
+    await users.renterA.client.rpc("review_listing", {
+      p_property_id: target.id,
+      p_expected_version: version,
+      p_decision: "suspended",
+      p_reason: "Unauthorized review",
+    }),
+  );
+  const stale = await users.admin.client.rpc("review_listing", {
+    p_property_id: target.id,
+    p_expected_version: version - 1,
+    p_decision: "suspended",
+    p_reason: "Old browser tab",
+  });
+  assert.match(stale.error.message, /STALE_REVIEW/);
+  assert.equal(ok(await anon.rpc("get_public_listing", { p_slug: slug })).length, 1);
+  ok(
+    await users.admin.client.rpc("review_listing", {
+      p_property_id: target.id,
+      p_expected_version: version,
+      p_decision: "suspended",
+      p_reason: "Suspended for follow-up review",
+    }),
+  );
+  assert.equal(ok(await anon.rpc("get_public_listing", { p_slug: slug })).length, 0);
+});
+
+test("incremental SQL Editor upgrade preserves existing listings and records only migration 004", async () => {
+  const source = readFileSync("supabase/upgrade-listings.sql", "utf8");
+  const sql = source.slice(source.indexOf("begin;\n") + 7, source.lastIndexOf("commit;"));
+  await db.query("begin");
+  try {
+    const before = await db.query("select count(*)::int as count from public.properties");
+    await db.query(
+      "drop function public.search_listings(text,text,text,numeric,numeric,text,integer,integer), public.get_public_listing(text), public.review_listing(uuid,integer,text,text), public.get_my_listing_reviews(uuid); delete from supabase_migrations.schema_migrations where version='20261017000400'",
+    );
+    await db.query(sql);
+    const after = await db.query("select count(*)::int as count from public.properties");
+    assert.equal(after.rows[0].count, before.rows[0].count);
+    const versions = await db.query(
+      "select count(*)::int as count from supabase_migrations.schema_migrations where version='20261017000400'",
+    );
+    assert.equal(versions.rows[0].count, 1);
+    const grants = await db.query(
+      "select has_function_privilege('anon','public.get_public_listing(text)','execute') as public_read, has_function_privilege('anon','public.review_listing(uuid,integer,text,text)','execute') as public_review",
+    );
+    assert.equal(grants.rows[0].public_read, true);
+    assert.equal(grants.rows[0].public_review, false);
+  } finally {
+    await db.query("rollback");
+  }
+});
+
 test("SQL Editor bundle bootstraps a fresh app schema and records migration versions atomically", async () => {
   const source = readFileSync("supabase/bootstrap.sql", "utf8");
   const sql = source.slice(source.indexOf("begin;\n") + 7, source.lastIndexOf("commit;"));
   await db.query("begin");
   try {
     await db.query(
-      "drop policy if exists puyohub_photos_closed on storage.objects; drop schema public cascade; drop schema private cascade; create schema public; grant usage on schema public to anon,authenticated,service_role; delete from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300')",
+      "drop policy if exists puyohub_photos_closed on storage.objects; drop schema public cascade; drop schema private cascade; create schema public; grant usage on schema public to anon,authenticated,service_role; delete from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400')",
     );
     await db.query(sql);
     const result = await db.query(
-      "select count(*)::int as count from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300')",
+      "select count(*)::int as count from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400')",
     );
-    assert.equal(result.rows[0].count, 3);
+    assert.equal(result.rows[0].count, 4);
     const profiles = await db.query("select count(*)::int as count from public.profiles");
     assert.ok(profiles.rows[0].count >= 6, "Existing Auth accounts should be backfilled safely");
   } finally {

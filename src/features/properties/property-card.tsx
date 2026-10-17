@@ -9,7 +9,7 @@ export function PropertyCard({ property }: { property: Property }) {
   return (
     <article className="property-card" data-testid="property-card">
       <Link
-        href={`/properties/${property.slug}`}
+        href={`/preview/rentals/${property.slug}`}
         className={`card-image ${property.palette}`}
         aria-label={`View ${property.name}, sample listing`}
       >
@@ -30,7 +30,7 @@ export function PropertyCard({ property }: { property: Property }) {
           <span>Monthly rental</span>
         </div>
         <h3>
-          <Link href={`/properties/${property.slug}`}>{property.name}</Link>
+          <Link href={`/preview/rentals/${property.slug}`}>{property.name}</Link>
         </h3>
         <p className="location">
           <MapPin size={14} aria-hidden="true" />

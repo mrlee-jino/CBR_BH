@@ -18,10 +18,10 @@ export function SiteHeader() {
       <div className="preview-banner">
         <div className="container preview-content">
           <span>
-            <span className="status-dot" /> A little preview of what’s coming.
+            <span className="status-dot" /> Monthly rentals, rooted in Cabadbaran.
           </span>
           <Link href="/preview">
-            Sample listings only <ArrowUpRight size={13} aria-hidden="true" />
+            About PuyoHub <ArrowUpRight size={13} aria-hidden="true" />
           </Link>
         </div>
       </div>

@@ -6,7 +6,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: { default: "PuyoHub — Find your space in Cabadbaran", template: "%s | PuyoHub" },
   description:
-    "Explore a preview of PuyoHub: a simpler way to discover monthly bedspaces, private rooms, and apartments in Cabadbaran City. Fictional sample listings only.",
+    "Find monthly bedspaces, private rooms, and apartments in Cabadbaran City. Property listings reviewed by PuyoHub admins.",
   robots: { index: false, follow: false },
 };
 

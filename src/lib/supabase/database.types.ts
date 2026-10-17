@@ -739,6 +739,14 @@ export type Database = {
         Returns: undefined;
       };
       end_allocation: { Args: { p_allocation_id: string; p_end_date: string }; Returns: undefined };
+      get_my_listing_reviews: {
+        Args: { p_property_id: string };
+        Returns: {
+          decision: string;
+          occurred_at: string;
+          reason: string;
+        }[];
+      };
       get_property_contact: {
         Args: { p_property_id: string };
         Returns: {
@@ -746,6 +754,19 @@ export type Database = {
           contact_name: string;
           contact_phone: string;
           street_address: string;
+        }[];
+      };
+      get_public_listing: {
+        Args: { p_slug: string };
+        Returns: {
+          barangay: string;
+          city: string;
+          description: string;
+          id: string;
+          monthly_rent: number;
+          property_type: string;
+          slug: string;
+          title: string;
         }[];
       };
       get_public_units: {
@@ -773,6 +794,15 @@ export type Database = {
       };
       release_future_block: { Args: { p_allocation_id: string }; Returns: undefined };
       resolve_report: { Args: { p_report_id: string; p_status: string }; Returns: undefined };
+      review_listing: {
+        Args: {
+          p_decision: string;
+          p_expected_version: number;
+          p_property_id: string;
+          p_reason: string;
+        };
+        Returns: undefined;
+      };
       save_property_draft: {
         Args: {
           p_barangay: string;
@@ -801,6 +831,28 @@ export type Database = {
           p_unit_type: string;
         };
         Returns: string;
+      };
+      search_listings: {
+        Args: {
+          p_barangay?: string;
+          p_limit?: number;
+          p_max?: number;
+          p_min?: number;
+          p_offset?: number;
+          p_query?: string;
+          p_sort?: string;
+          p_unit_type?: string;
+        };
+        Returns: {
+          barangay: string;
+          city: string;
+          description: string;
+          id: string;
+          monthly_rent: number;
+          property_type: string;
+          slug: string;
+          title: string;
+        }[];
       };
       submit_booking: {
         Args: {

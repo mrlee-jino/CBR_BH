@@ -1,4 +1,4 @@
-import { barangays, properties, unitTypes } from "./data";
+import { properties, unitTypes } from "./data";
 
 export type SearchParams = Record<string, string | string[] | undefined>;
 export type Filters = {
@@ -10,7 +10,7 @@ export type Filters = {
   sort: string;
 };
 
-export function searchProperties(params: SearchParams) {
+export function parseFilters(params: SearchParams) {
   const read = (name: string) => {
     const value = params[name];
     return (Array.isArray(value) ? value[0] : value)?.trim() ?? "";
@@ -21,7 +21,7 @@ export function searchProperties(params: SearchParams) {
   };
   const filters: Filters = {
     q: read("q").slice(0, 100),
-    area: barangays.includes(read("area")) ? read("area") : "",
+    area: read("area").slice(0, 80),
     type: unitTypes.some((type) => type.value === read("type")) ? read("type") : "",
     min: budget("min"),
     max: budget("max"),
@@ -34,6 +34,11 @@ export function searchProperties(params: SearchParams) {
   if (filters.min && filters.max && Number(filters.min) > Number(filters.max)) {
     errors.push("Your minimum monthly budget must be less than or equal to your maximum.");
   }
+  return { filters, errors };
+}
+
+export function searchProperties(params: SearchParams) {
+  const { filters, errors } = parseFilters(params);
   if (errors.length) return { filters, errors, results: [] };
 
   const results = properties.filter((property) => {

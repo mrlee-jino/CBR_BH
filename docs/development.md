@@ -19,8 +19,9 @@ Runtime: Node 24.19.0; package manager: npm 11.9.0. Direct dependencies are exac
 
 - `src/app`: routes, metadata, global theme, and route states.
 - `src/components/layout`: shared navigation and footer.
-- `src/features/properties`: typed fixtures, query normalization/filtering, forms, cards, amenity icons, and request explanation.
-- `src/lib/money.ts`: consistent whole-peso monthly price display.
+- `src/features/properties`: fictional demo fixtures/cards, shared query parsing, search controls, amenity icons, and request explanation.
+- `src/features/listings`: owner/admin server actions and forms, anonymous live listing queries, and live cards.
+- `src/lib/money.ts`: consistent peso display that preserves centavos on fractional prices.
 - `public/images`: original SVG illustrations. These contain no third-party photography, remote requests, scripts, or precise property coordinates.
 - `tests/e2e`: behavior/accessibility checks against the production server.
 - `.github/workflows/ci.yml`: repeatable installation, validation, and browser checks.
@@ -31,7 +32,7 @@ The discovery fixtures need no credentials; account routes use Supabase SSR and 
 
 ## Design and scope
 
-The founder selected a light purple theme: lavender backgrounds, violet primary actions, plum text, and cream accents. All artwork is original vector illustration, displayed with explicit disclosure. There are no real photographs or claims of verified/live inventory.
+The founder selected a light purple theme: lavender backgrounds, violet primary actions, plum text, and cream accents. All artwork is original vector illustration, displayed with explicit disclosure. Live listings are reviewed by admins and use labeled photo placeholders. Fictional demo artwork is not used as property photography.
 
 The location panel is an illustrative diagram, not Leaflet or a navigable map. Add a supported tile provider, attribution, approximate coordinates, and failure fallback when implementing real discovery maps. Do not fabricate precise coordinates for sample properties.
 

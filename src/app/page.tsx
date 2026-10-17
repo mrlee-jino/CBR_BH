@@ -18,8 +18,10 @@ import {
   Sprout,
 } from "lucide-react";
 import { HeroSearch } from "@/features/properties/search-form";
-import { PropertyCard } from "@/features/properties/property-card";
-import { properties } from "@/features/properties/data";
+import { ListingCard } from "@/features/listings/card";
+import { findListings } from "@/features/listings/public";
+export const dynamic = "force-dynamic";
+export const metadata = { robots: { index: true, follow: true } };
 
 const categories = [
   {
@@ -45,7 +47,11 @@ const categories = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const result = await findListings({ p_limit: 3 })
+    .then((listings) => ({ listings, unavailable: false }))
+    .catch(() => ({ listings: [], unavailable: true }));
+  const { listings, unavailable } = result;
   return (
     <>
       <section className="hero">
@@ -119,7 +125,7 @@ export default function Home() {
                 <Sprout size={14} aria-hidden="true" /> Built with local living in mind
               </span>
               <Link href="/preview">
-                Explore the sample experience <ArrowUpRight size={13} aria-hidden="true" />
+                About PuyoHub <ArrowUpRight size={13} aria-hidden="true" />
               </Link>
             </div>
           </div>
@@ -166,16 +172,23 @@ export default function Home() {
               <h2>Good spaces. New beginnings.</h2>
             </div>
             <Link href="/properties" className="text-link">
-              Explore all sample rentals <ArrowRight size={17} aria-hidden="true" />
+              Explore all rentals <ArrowRight size={17} aria-hidden="true" />
             </Link>
           </div>
           <p className="section-disclaimer">
-            Fictional homes, sample prices, and original illustrations — a preview of the experience
-            we’re building.
+            Admin-reviewed properties from local owners. Check each listing for monthly prices and
+            rental terms.
           </p>
+          {!listings.length && (
+            <p className="account-card">
+              {unavailable
+                ? "Listings are temporarily unavailable. Please try again shortly."
+                : "Our first homes are on their way. Owners can add a property and submit it for review."}
+            </p>
+          )}
           <div className="property-grid">
-            {properties.slice(0, 3).map((property) => (
-              <PropertyCard key={property.slug} property={property} />
+            {listings.map((property) => (
+              <ListingCard key={property.slug} property={property} />
             ))}
           </div>
         </div>
@@ -224,7 +237,8 @@ export default function Home() {
           </div>
           <p className="how-note">
             <Sparkles size={15} aria-hidden="true" />
-            Today, you can explore sample homes. Real listings and requests come next.
+            Owners can now submit properties for review. Viewing and booking requests are coming
+            next.
           </p>
         </div>
       </section>
@@ -251,8 +265,8 @@ export default function Home() {
                 We’re building a simpler way for local owners to list spaces, manage requests, and
                 keep track of what’s available.
               </p>
-              <Link href="/preview#owners" className="button button-light">
-                See what’s coming for owners <ArrowUpRight size={17} aria-hidden="true" />
+              <Link href="/become-an-owner" className="button button-light">
+                List your property <ArrowUpRight size={17} aria-hidden="true" />
               </Link>
             </div>
             <div className="owner-stamp">
@@ -267,7 +281,7 @@ export default function Home() {
       <div className="container closing-note">
         <Sprout size={20} aria-hidden="true" />
         <p>Every new beginning deserves a place to grow.</p>
-        <Link href="/properties" aria-label="Explore sample rentals">
+        <Link href="/properties" aria-label="Explore rentals">
           <ArrowDown size={19} aria-hidden="true" />
         </Link>
       </div>

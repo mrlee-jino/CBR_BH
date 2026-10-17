@@ -18,6 +18,7 @@ export function DashboardShell({ title, children }: { title: string; children: R
         <Link href="/dashboard/settings">Profile</Link>
         <Link href="/dashboard/security">Security</Link>
         <Link href="/become-an-owner">Owner access</Link>
+        <Link href="/owner">My properties</Link>
       </nav>
       {children}
     </section>

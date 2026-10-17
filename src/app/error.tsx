@@ -12,7 +12,7 @@ export default function ErrorPage({ reset }: { reset: () => void }) {
         Try again
       </button>
       <Link href="/properties" className="text-link">
-        Explore sample rentals
+        Explore rentals
       </Link>
     </div>
   );

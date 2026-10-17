@@ -21,11 +21,11 @@ export function SiteFooter() {
         </div>
         <nav aria-label="Footer navigation">
           <Link href="/properties">
-            Explore sample rentals <ArrowUpRight size={15} aria-hidden="true" />
+            Explore rentals <ArrowUpRight size={15} aria-hidden="true" />
           </Link>
           <Link href="/#how-it-works">How it works</Link>
           <Link href="/#for-owners">For property owners</Link>
-          <Link href="/preview">About this preview</Link>
+          <Link href="/preview">About PuyoHub</Link>
           <Link href="/dashboard">Your account / sign in</Link>
         </nav>
         <div className="footer-location">
@@ -39,7 +39,7 @@ export function SiteFooter() {
       </div>
       <div className="container footer-bottom">
         <span>© {new Date().getFullYear()} PuyoHub</span>
-        <span>Concept illustrations. Fictional properties. No real reservations.</span>
+        <span>Monthly rentals. Admin-reviewed listings. Bookings coming next.</span>
         <span>Made for the everyday move.</span>
       </div>
     </footer>

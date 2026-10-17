@@ -4,17 +4,19 @@ import AxeBuilder from "@axe-core/playwright";
 test("landing search carries the chosen area and type to results", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Find your space.");
-  await expect(page.getByRole("link", { name: "Sample listings only" })).toBeVisible();
+  await expect(
+    page.locator(".preview-banner").getByRole("link", { name: "About PuyoHub", exact: true }),
+  ).toBeVisible();
   await page.getByLabel("Where do you want to live?").selectOption("Caasinan");
   await page.getByLabel("Your kind of space").selectOption("private-room");
   await page.getByRole("button", { name: "Find my space" }).click();
   await expect(page).toHaveURL(/area=Caasinan.*type=private-room/);
-  await expect(page.getByTestId("property-card")).toHaveCount(2);
+  await expect(page).toHaveURL(/\/properties\?/);
   await expect(page.getByLabel("Barangay", { exact: true })).toHaveValue("Caasinan");
 });
 
 test("combined filters and browser history preserve the search", async ({ page }) => {
-  await page.goto("/properties");
+  await page.goto("/preview/rentals");
   await page.getByLabel("Barangay", { exact: true }).selectOption("Caasinan");
   await page.getByLabel("Type of space").selectOption("private-room");
   await page.getByLabel("Maximum", { exact: true }).fill("3500");
@@ -29,16 +31,16 @@ test("combined filters and browser history preserve the search", async ({ page }
 });
 
 test("keyword search and price sorting change actual result cards", async ({ page }) => {
-  await page.goto("/properties?q=garden");
+  await page.goto("/preview/rentals?q=garden");
   await expect(page.getByTestId("property-card")).toHaveCount(1);
   await expect(page.getByTestId("property-card")).toContainText("Amihan Garden House");
-  await page.goto("/properties?sort=price-asc");
+  await page.goto("/preview/rentals?sort=price-asc");
   await expect(page.getByTestId("property-card").first()).toContainText("Balay Sidlak Bedspaces");
   await expect(page.getByTestId("property-card").last()).toContainText("The Acacia Apartments");
 });
 
 test("empty results have a working recovery action", async ({ page }) => {
-  await page.goto("/properties?max=1000");
+  await page.goto("/preview/rentals?max=1000");
   await expect(page.getByTestId("property-card")).toHaveCount(0);
   await expect(
     page.getByRole("heading", { name: "A little more room in your search?" }),
@@ -50,17 +52,17 @@ test("empty results have a working recovery action", async ({ page }) => {
 test("invalid budgets are explained without pretending there are valid results", async ({
   page,
 }) => {
-  await page.goto("/properties?min=7000&max=2000");
+  await page.goto("/preview/rentals?min=7000&max=2000");
   await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "minimum monthly budget must be less than or equal",
   );
   await expect(page.getByTestId("property-card")).toHaveCount(0);
-  await page.goto("/properties?max=not-a-number");
+  await page.goto("/preview/rentals?max=not-a-number");
   await expect(page.getByRole("main").getByRole("alert")).toContainText("whole pesos");
 });
 
 test("request explanation is keyboard accessible and never submits a booking", async ({ page }) => {
-  await page.goto("/properties/amihan-garden-house");
+  await page.goto("/preview/rentals/amihan-garden-house");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Amihan Garden House");
   await expect(
     page.getByText("Original concept illustrations · not property photos"),
@@ -78,28 +80,25 @@ test("request explanation is keyboard accessible and never submits a booking", a
 });
 
 test("unknown property is a real 404 with a recovery link", async ({ page }) => {
-  const response = await page.goto("/properties/does-not-exist");
+  const response = await page.goto("/preview/rentals/does-not-exist");
   expect(response?.status()).toBe(404);
   await expect(page.getByRole("heading", { name: "This space isn’t here." })).toBeVisible();
-  await page
-    .getByRole("main")
-    .getByRole("link", { name: "Explore sample rentals", exact: true })
-    .click();
-  await expect(page.getByTestId("property-card")).toHaveCount(6);
+  await page.getByRole("main").getByRole("link", { name: "Explore rentals", exact: true }).click();
+  await expect(page).toHaveURL(/\/properties$/);
 });
 
 test("preview is excluded from indexing and explains its limits", async ({ page, request }) => {
   await page.goto("/preview");
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
-  await expect(page.getByText(/There are no real owners/)).toBeVisible();
+  await expect(page.getByText(/A separate demo contains fictional properties/)).toBeVisible();
   const robots = await request.get("/robots.txt");
-  expect(await robots.text()).toContain("Disallow: /");
+  expect(await robots.text()).toContain("Disallow: /preview");
 });
 
 test("page has no horizontal overflow or broken local artwork", async ({ page }) => {
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
-    for (const route of ["/", "/properties", "/properties/amihan-garden-house"]) {
+    for (const route of ["/", "/preview/rentals", "/preview/rentals/amihan-garden-house"]) {
       await page.goto(route);
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
       expect(
@@ -146,14 +145,19 @@ test("navigation and the skip link work at the selected viewport", async ({ page
 });
 
 test("core pages and the request dialog pass automated accessibility checks", async ({ page }) => {
-  for (const route of ["/", "/properties", "/properties/amihan-garden-house", "/preview"]) {
+  for (const route of [
+    "/",
+    "/preview/rentals",
+    "/preview/rentals/amihan-garden-house",
+    "/preview",
+  ]) {
     await page.goto(route);
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
       .analyze();
     expect(results.violations).toEqual([]);
   }
-  await page.goto("/properties/amihan-garden-house");
+  await page.goto("/preview/rentals/amihan-garden-house");
   await page.getByRole("button", { name: "How will requests work?" }).click();
   const dialogResults = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa"])

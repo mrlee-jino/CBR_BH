@@ -28,11 +28,11 @@ export default async function Dashboard() {
               <span className="eyebrow">YOUR WORKSPACES</span>
               <h2>One account, your next chapter.</h2>
               <p>
-                Current roles: {account.roles.join(", ")}. Property discovery still uses fictional
-                sample listings.
+                Current roles: {account.roles.join(", ")}. Public search shows admin-reviewed
+                property listings.
               </p>
               <Link className="text-link" href="/properties">
-                Explore sample rentals →
+                Explore rentals →
               </Link>
               {account.roles.includes("owner") && (
                 <p>
@@ -54,7 +54,7 @@ export default async function Dashboard() {
               <h2>A few everyday essentials.</h2>
               <p>
                 Manage your private profile, set up an authenticator, or activate owner access.
-                Requests, favorites, and real listing screens follow in the next milestones.
+                Requests and favorites follow in the next milestones.
               </p>
               <Link className="text-link" href="/dashboard/settings">
                 Edit your profile →

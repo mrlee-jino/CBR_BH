@@ -45,7 +45,13 @@ export function HeroSearch() {
   );
 }
 
-export function SearchFilters({ filters = emptyFilters }: { filters?: Filters }) {
+export function SearchFilters({
+  filters = emptyFilters,
+  action = "/properties",
+}: {
+  filters?: Filters;
+  action?: string;
+}) {
   return (
     <details className="filter-panel" open>
       <summary>
@@ -54,12 +60,7 @@ export function SearchFilters({ filters = emptyFilters }: { filters?: Filters })
         </span>
         <span className="filter-toggle">Show / hide</span>
       </summary>
-      <form
-        action="/properties"
-        className="filter-form"
-        role="search"
-        aria-label="Filter sample rentals"
-      >
+      <form action={action} className="filter-form" role="search" aria-label="Filter rentals">
         <div className="field">
           <label htmlFor="q">Name or keyword</label>
           <div className="input-with-icon">
@@ -75,12 +76,30 @@ export function SearchFilters({ filters = emptyFilters }: { filters?: Filters })
         </div>
         <div className="field">
           <label htmlFor="area">Barangay</label>
-          <select id="area" name="area" defaultValue={filters.area}>
-            <option value="">All barangays</option>
-            {barangays.map((area) => (
-              <option key={area}>{area}</option>
-            ))}
-          </select>
+          {action === "/preview/rentals" ? (
+            <select id="area" name="area" defaultValue={filters.area}>
+              <option value="">All barangays</option>
+              {barangays.map((area) => (
+                <option key={area}>{area}</option>
+              ))}
+            </select>
+          ) : (
+            <>
+              <input
+                id="area"
+                name="area"
+                list="barangay-options"
+                placeholder="All barangays"
+                maxLength={80}
+                defaultValue={filters.area}
+              />
+              <datalist id="barangay-options">
+                {barangays.map((area) => (
+                  <option key={area} value={area} />
+                ))}
+              </datalist>
+            </>
+          )}
         </div>
         <div className="field">
           <label htmlFor="type">Type of space</label>
@@ -139,11 +158,13 @@ export function SearchFilters({ filters = emptyFilters }: { filters?: Filters })
         <button className="button" type="submit">
           Apply filters <ArrowRight size={17} aria-hidden="true" />
         </button>
-        <Link href="/properties" className="reset-link">
+        <Link href={action} className="reset-link">
           Reset filters
         </Link>
         <p className="filter-footnote">
-          Prices and unit options are examples. No live availability is shown.
+          {action === "/preview/rentals"
+            ? "Fictional prices and units. No live availability is shown."
+            : "Monthly offers are not a guarantee of availability for your dates."}
         </p>
       </form>
     </details>

@@ -1,6 +1,22 @@
 import type { MetadataRoute } from "next";
-
-// Keep fictional listings out of search indexes until real inventory is published.
 export default function robots(): MetadataRoute.Robots {
-  return { rules: { userAgent: "*", disallow: "/" } };
+  return {
+    rules: {
+      userAgent: "*",
+      allow: ["/", "/properties"],
+      disallow: [
+        "/preview",
+        "/dashboard",
+        "/owner",
+        "/admin",
+        "/auth",
+        "/login",
+        "/signup",
+        "/reset-password",
+        "/forgot-password",
+        "/resend-confirmation",
+        "/become-an-owner",
+      ],
+    },
+  };
 }

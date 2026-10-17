@@ -13,7 +13,8 @@ export default async function BecomeOwner() {
         <h2>Your owner workspace starts here.</h2>
         <p className="auth-description">
           Owner access adds to your renter account. It does not grant admin privileges or
-          automatically verify a property. Listing management screens are a later milestone.
+          automatically verify a property. You can add properties and rooms, then submit your
+          listing for admin review.
         </p>
         {account.setupRequired || account.profile?.account_status !== "active" ? (
           <p className="form-message">
