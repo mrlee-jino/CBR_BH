@@ -157,6 +157,8 @@ test("property owner signup guides verified users into owner setup without grant
 });
 
 test("auth forms remain accessible on desktop and mobile", async ({ page }) => {
+  // Measure final contrast rather than the page-entry animation's translucent frame.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   for (const route of [
     "/login",
     "/signup",
