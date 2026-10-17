@@ -15,7 +15,7 @@ const message = (text: string, status: number) =>
 
 export async function POST(request: Request) {
   if (request.headers.get("origin") !== siteOrigin())
-    return message("Upload from the PuyoHub website.", 403);
+    return message("Upload from the Cabahay website.", 403);
   const client = await createClient();
   const {
     data: { user },

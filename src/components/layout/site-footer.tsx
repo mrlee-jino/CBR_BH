@@ -10,13 +10,13 @@ export function SiteFooter() {
             <span className="brand-icon">
               <House size={23} aria-hidden="true" />
             </span>
-            Puyo<span className="brand-light">Hub</span>
+            Cabahay
             <span className="brand-period">.</span>
           </Link>
           <p>
-            Find your space.
+            A place to stay.
             <br />
-            Feel a little more at home.
+            The freedom to belong.
           </p>
         </div>
         <nav aria-label="Footer navigation">
@@ -25,7 +25,7 @@ export function SiteFooter() {
           </Link>
           <Link href="/#how-it-works">How it works</Link>
           <Link href="/#for-owners">For property owners</Link>
-          <Link href="/preview">About PuyoHub</Link>
+          <Link href="/preview">About Cabahay</Link>
           <Link href="/dashboard">Your account / sign in</Link>
         </nav>
         <div className="footer-location">
@@ -38,9 +38,9 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="container footer-bottom">
-        <span>© {new Date().getFullYear()} PuyoHub</span>
+        <span>© {new Date().getFullYear()} Cabahay</span>
         <span>Monthly rentals. Admin-reviewed listings. Bookings coming next.</span>
-        <span>Made for the everyday move.</span>
+        <span>A place to stay. The freedom to belong.</span>
       </div>
     </footer>
   );

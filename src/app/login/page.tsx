@@ -21,7 +21,7 @@ export default async function LoginPage({
   return (
     <AuthShell
       title="Welcome back."
-      description="Sign in to your PuyoHub account."
+      description="Sign in to your Cabahay account."
       footer={
         <p>
           New here? <Link href="/signup">Create an account</Link>

@@ -10,7 +10,7 @@ export default async function Dashboard() {
     <DashboardShell title={`Welcome, ${account.profile?.display_name ?? "neighbor"}.`}>
       {account.setupRequired ? (
         <div className="form-message" role="alert">
-          Your email account works, but the PuyoHub database setup is not available yet. The project
+          Your email account works, but the Cabahay database setup is not available yet. The project
           operator needs to apply the versioned migrations. No property data has been loaded.
         </div>
       ) : account.profile?.account_status === "suspended" ? (

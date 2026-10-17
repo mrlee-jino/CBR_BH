@@ -3,7 +3,7 @@ import Link from "@/components/ui/navigation-link";
 import { ArrowRight, Building2, Compass, Sprout } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "About PuyoHub",
+  title: "About Cabahay",
   robots: { index: false, follow: false },
 };
 
@@ -14,7 +14,7 @@ export default function PreviewPage() {
       <h1>
         Meet the first little
         <br />
-        piece of PuyoHub.
+        piece of Cabahay.
       </h1>
       <p className="page-lead">
         We’re building a rental marketplace for everyday life in Cabadbaran City, beginning with

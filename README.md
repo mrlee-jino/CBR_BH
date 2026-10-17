@@ -1,4 +1,4 @@
-# PuyoHub
+# Cabahay
 
 A rental discovery marketplace and property management platform, starting with monthly boarding houses, bedspaces, rooms, and apartments in Cabadbaran City, Philippines.
 
