@@ -100,14 +100,14 @@ export function AuthForm({ mode, next = "/dashboard" }: { mode: Mode; next?: str
             name="password"
             type="password"
             autoComplete={mode === "login" ? "current-password" : "new-password"}
-            minLength={mode === "login" ? 1 : 12}
+            minLength={mode === "login" ? 1 : 8}
             maxLength={128}
             aria-describedby={mode !== "login" ? "password-help" : undefined}
             required
           />
           {mode !== "login" && (
             <p className="field-help" id="password-help">
-              Use 12–128 characters. A long, unique passphrase works well.
+              Use 8–128 characters. A long, unique passphrase works well.
             </p>
           )}
         </div>
@@ -120,7 +120,7 @@ export function AuthForm({ mode, next = "/dashboard" }: { mode: Mode; next?: str
             name="confirm_password"
             type="password"
             autoComplete="new-password"
-            minLength={12}
+            minLength={8}
             maxLength={128}
             required
           />

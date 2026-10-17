@@ -10,7 +10,7 @@ import { safeNext } from "./redirect";
 
 export type AuthState = { message?: string; success?: boolean };
 const emailSchema = z.email().max(254);
-const passwordSchema = z.string().min(12).max(128);
+const passwordSchema = z.string().min(8).max(128);
 const emailValue = (form: FormData) =>
   String(form.get("email") ?? "")
     .trim()
@@ -37,7 +37,7 @@ export async function signup(previous: AuthState, form: FormData): Promise<AuthS
   if (!data.success)
     return {
       message:
-        "Choose Renter or Property owner, enter your name, a valid email and a password of 12–128 characters, and accept the account notice.",
+        "Choose Renter or Property owner, enter your name, a valid email and a password of 8–128 characters, and accept the account notice.",
     };
   try {
     const supabase = await createClient();
@@ -162,7 +162,7 @@ export async function resetPassword(previous: AuthState, form: FormData): Promis
   void previous;
   const password = passwordSchema.safeParse(form.get("password"));
   if (!password.success || password.data !== form.get("confirm_password"))
-    return { message: "Use 12–128 characters and make sure both passwords match." };
+    return { message: "Use 8–128 characters and make sure both passwords match." };
   try {
     const supabase = await createClient();
     const {

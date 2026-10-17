@@ -37,7 +37,7 @@ test("submitting a form shows shared loading feedback and prevents repeated clic
   await page.getByRole("radio", { name: /^Renter/ }).check();
   await page.getByLabel("Your name").fill("Loading Test");
   await page.getByLabel("Email address").fill("loading@example.test");
-  await page.getByLabel("Password", { exact: true }).fill("A-long-test-password-123!");
+  await page.getByLabel("Password", { exact: true }).fill("Pass123!");
   await page.getByRole("checkbox").check();
   try {
     await page.getByRole("button", { name: "Create account", exact: true }).click();

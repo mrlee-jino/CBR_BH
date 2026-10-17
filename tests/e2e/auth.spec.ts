@@ -104,7 +104,7 @@ test("signup, email confirmation, profile, owner activation, logout and recovery
   await expect(page.getByRole("status").filter({ hasText: "recovery emails" })).toBeVisible();
   await page.goto(await emailLink(email));
   await expect(page).toHaveURL(/\/reset-password$/);
-  const newPassword = `New-${password}`;
+  const newPassword = "New1234!"; // Exercise the eight-character password-update boundary.
   await page.getByLabel("New password", { exact: true }).fill(newPassword);
   await page.getByLabel("Confirm new password").fill(newPassword);
   await page.getByRole("button", { name: "Update password", exact: true }).click();
@@ -140,7 +140,7 @@ test("property owner signup guides verified users into owner setup without grant
   await page.getByRole("radio", { name: /^Property owner/ }).check();
   await page.getByLabel("Your name").fill("New Property Owner");
   await page.getByLabel("Email address").fill(email);
-  await page.getByLabel("Password", { exact: true }).fill(password);
+  await page.getByLabel("Password", { exact: true }).fill("Owner12!");
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Create account", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "confirmation email" })).toBeVisible();
