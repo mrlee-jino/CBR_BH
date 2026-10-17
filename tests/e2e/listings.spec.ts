@@ -116,6 +116,9 @@ test("owner creates a property and room, admin reviews it, and renters see only 
     await expect(occupancy.getByRole("status")).toContainText("Availability end date saved");
     await expect(occupancy).toContainText(`${occupancyStart} to ${occupancyEnd}`);
 
+    await page
+      .getByLabel("Room or bedspace", { exact: true })
+      .selectOption({ label: "Room A · Bed 1" });
     await page.getByLabel("Availability record", { exact: true }).selectOption("blocked");
     const maintenanceStart = dateIn(60);
     await page.getByLabel("Start date (Philippine date)").fill(maintenanceStart);

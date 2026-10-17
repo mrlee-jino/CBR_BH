@@ -150,7 +150,7 @@ test("renters request, owners decide, contacts stay private, and competing booki
     await page.getByLabel("Message to owner (optional)").fill("I would like to see the room.");
     await page.getByLabel(/I agree to share/).check();
     await page.getByRole("button", { name: "Send viewing request", exact: true }).click();
-    await expect(page).toHaveURL(/\?kind=viewing$/);
+    await expect(page).toHaveURL(/\/dashboard\/requests\/[a-f0-9-]+\?kind=viewing$/);
     const viewingUrl = page.url();
     await expect(page.getByText("Private request address 789", { exact: true })).toHaveCount(0);
     await ownerPage.goto(viewingUrl);
