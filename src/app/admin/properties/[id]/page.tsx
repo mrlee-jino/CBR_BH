@@ -6,19 +6,28 @@ import { DashboardShell } from "@/features/auth/dashboard-shell";
 import { ReviewForm } from "@/features/listings/forms";
 import { createClient } from "@/lib/supabase/server";
 import { formatPeso } from "@/lib/money";
+import { ManagedPhotos } from "@/features/photos/gallery";
 export const metadata = { title: "Review property" };
 export default async function Review({ params }: { params: Promise<{ id: string }> }) {
   await requireRole("admin");
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) notFound();
   const client = await createClient();
-  const [p, d, u, ownerReviews] = await Promise.all([
+  const [p, d, u, ownerReviews, photos] = await Promise.all([
     client.from("properties").select("*").eq("id", id).maybeSingle(),
     client.from("property_private_details").select("*").eq("property_id", id).maybeSingle(),
     client.from("units").select("*").eq("property_id", id).order("label"),
     client.rpc("get_my_listing_reviews", { p_property_id: id }),
+    client
+      .from("property_photos")
+      .select("id,alt_text,width,height,is_cover,status,review_note")
+      .eq("property_id", id)
+      .eq("upload_state", "ready")
+      .order("is_cover", { ascending: false })
+      .order("created_at")
+      .limit(12),
   ]);
-  if (p.error || d.error || u.error || ownerReviews.error)
+  if (p.error || d.error || u.error || ownerReviews.error || photos.error)
     throw new Error("Could not load listing review.");
   if (!p.data) notFound();
   const property = p.data;
@@ -41,9 +50,17 @@ export default async function Review({ params }: { params: Promise<{ id: string 
           {d.data?.contact_name} · {d.data?.contact_phone}
         </p>
         <p className="field-help">
-          Verify the property and contact details independently before approval. No photos are
-          collected in this milestone.
+          Verify the property and contact details independently before approval. Review every
+          pending photo before publishing.
         </p>
+      </section>
+      <section className="account-card">
+        <h2>Photo review</h2>
+        {photos.data.length ? (
+          <ManagedPhotos photos={photos.data} review={property.status === "pending_review"} />
+        ) : (
+          <p>No photos uploaded yet.</p>
+        )}
       </section>
       <section className="account-card">
         <h2>Units ({u.data.length})</h2>

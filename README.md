@@ -6,7 +6,7 @@ A rental discovery marketplace and property management platform, starting with m
 
 The app includes owner property/room forms, admin review with MFA, and public search/detail pages backed by approved Supabase listings. Signup/email confirmation, login/logout, recovery, private profiles, and owner activation are implemented. Migrations and security tests run against a real local Supabase stack. Hosted activation requires the operator steps in [Supabase setup](docs/supabase-setup.md) and [the listing workspace upgrade](docs/listing-workspaces.md).
 
-Six fictional listings remain in a clearly separate demo at `/preview/rentals`. Public discovery never substitutes demo inventory for real listings. Photo processing, booking/viewing interfaces, maps, favorites UI, and payments remain future milestones.
+Six fictional listings remain in a clearly separate demo at `/preview/rentals`. Public discovery never substitutes demo inventory for real listings. Secure photo processing and moderation are implemented. Booking/viewing interfaces, maps, favorites UI, and payments remain future milestones.
 
 The first release covers discovery, favorites, viewing requests, monthly booking requests, owner inventory management, and admin moderation. Online payments, subscriptions, rent accounting, and nightly stays are outside this release.
 
@@ -42,7 +42,7 @@ Routes:
 - `/become-an-owner`, `/owner`, `/owner/properties/new`, `/owner/properties/[id]` — owner activation, property drafts, rooms, offers, and review feedback.
 - `/admin`, `/admin/properties/[id]` — MFA-protected listing queues and review decisions.
 
-Live listings contain owner-provided details reviewed by admins. Offering a unit does not guarantee availability for particular dates. Photos are not collected yet; live pages use labeled placeholders. Fictional artwork and decorative area diagrams are confined to the demo; demo and private account pages are excluded from indexing. Public listing pages are indexable. No public booking or viewing forms are available yet.
+Live listings contain owner-provided details reviewed by admins. Offering a unit does not guarantee availability for particular dates. Owners can upload validated photos for admin review; listings without photos use labeled placeholders. Fictional artwork and decorative area diagrams are confined to the demo; demo and private account pages are excluded from indexing. Public listing pages are indexable. No public booking or viewing forms are available yet.
 
 ## Validate
 
@@ -62,6 +62,8 @@ The browser suite covers the separate discovery demo plus real local signup/veri
 
 `npm run check` runs formatting, lint, types, database/API tests, a production build, and browser tests after the local stack/test configuration and Chromium are ready. GitHub Actions starts/reset the local stack and runs those checks for pushes to `main` and pull requests. Reports/traces are ignored locally and retained as CI failure artifacts. Refresh committed schema types with `npm run db:types` and the first-install SQL bundle with `npm run db:bundle` after migration changes.
 
-Next: apply the incremental listing upgrade to your hosted development project, test a real owner/admin publication flow, then build secure photo processing and viewing/booking interfaces. See [the implementation plan](docs/implementation.md).
+Next: apply the incremental listing upgrade to your hosted development project, test a real owner/admin publication flow, activate secure photos, then build viewing/booking interfaces. See [the implementation plan](docs/implementation.md).
 
 Owner listing creation, rooms, admin review, and live public discovery: see [listing workspace setup and upgrade](docs/listing-workspaces.md). Existing Supabase projects must run `supabase/upgrade-listings.sql` once before deploying this milestone.
+
+Secure photos require the incremental [photo upgrade and server-only key setup](docs/secure-photos.md).

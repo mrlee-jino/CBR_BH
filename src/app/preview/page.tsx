@@ -41,8 +41,9 @@ export default function PreviewPage() {
           <Sprout size={29} strokeWidth={1.4} aria-hidden="true" />
           <h2>What comes next</h2>
           <p>
-            Photo processing, viewing requests, and booking interfaces come next. Owners can already
-            manage rooms, monthly prices, and rental terms.
+            Viewing requests and booking interfaces come next. Photo uploads are validated and
+            reviewed before public display. Owners can already manage rooms, monthly prices, and
+            rental terms.
           </p>
           <p>
             A pending request won’t reserve a unit. Only an owner-approved booking will hold it.

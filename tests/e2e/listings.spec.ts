@@ -3,6 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import pg from "pg";
+import sharp from "sharp";
 import { currentTotp } from "../helpers/totp.mjs";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -88,6 +89,58 @@ test("owner creates a property and room, admin reviews it, and renters see only 
       .fill("Water included; electricity billed separately.");
     await page.getByRole("button", { name: "Add room or bedspace", exact: true }).click();
     await expect(page.getByText(/Room A · Bed 1 · ₱2,500/)).toBeVisible();
+    const crossOrigin = await page.request.post("/api/photos", {
+      headers: { Origin: "https://attacker.example" },
+      data: "ignored",
+    });
+    expect(crossOrigin.status()).toBe(403);
+    const oversized = await page.request.post("/api/photos", {
+      headers: { Origin: "http://127.0.0.1:3000" },
+      multipart: {
+        property_id: id,
+        alt_text: "Oversized photo",
+        photo: {
+          name: "huge.png",
+          mimeType: "image/png",
+          buffer: Buffer.alloc(3 * 1024 * 1024 + 70000),
+        },
+      },
+    });
+    expect(oversized.status(), await oversized.text()).toBe(413);
+    await page.getByLabel("Choose a property photo").setInputFiles({
+      name: "unsafe.svg",
+      mimeType: "image/png",
+      buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>'),
+    });
+    await page.getByLabel("Photo description", { exact: true }).fill("Room A with study area");
+    await page.getByRole("button", { name: "Upload photo", exact: true }).click();
+    await expect(
+      page.getByRole("main").getByRole("alert").filter({ hasText: "valid, nonanimated" }),
+    ).toBeVisible();
+    const inputPhoto = await sharp({
+      create: { width: 320, height: 180, channels: 3, background: "#cdb4db" },
+    })
+      .withExif({ IFD0: { Artist: "Private camera information" } })
+      .png()
+      .toBuffer();
+    await page
+      .getByLabel("Choose a property photo")
+      .setInputFiles({ name: "room.png", mimeType: "image/png", buffer: inputPhoto });
+    await page.getByRole("button", { name: "Upload photo", exact: true }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "Photo uploaded for review" }),
+    ).toBeVisible();
+    const image = page.getByRole("img", { name: "Room A with study area", exact: true });
+    await expect(image).toBeVisible();
+    const photoPath = await image.getAttribute("src");
+    expect(photoPath).toMatch(/^\/media\/photos\//);
+    expect((await publicPage.request.get(photoPath!)).status()).toBe(404);
+    const privateImage = await page.request.get(photoPath!);
+    expect(privateImage.status()).toBe(200);
+    expect(privateImage.headers()["cache-control"]).toContain("no-store");
+    const outputMetadata = await sharp(await privateImage.body()).metadata();
+    expect(outputMetadata.format).toBe("webp");
+    expect(outputMetadata.exif).toBeUndefined();
     await publicPage.goto(`/properties/garden-${token}`);
     await expect(publicPage.getByRole("heading", { level: 1 })).toHaveText(
       "This space isn’t here.",
@@ -112,12 +165,32 @@ test("owner creates a property and room, admin reviews it, and renters see only 
       .getByLabel("Review notes")
       .fill("Verified contact and property details for publication.");
     await page.getByRole("button", { name: "Save review", exact: true }).click();
+    await expect(page.getByRole("main").getByRole("alert")).toContainText(
+      "Review every pending photo",
+    );
+    await page
+      .getByLabel("Photo review note", { exact: true })
+      .fill("Clear photo of the property; no personal documents visible.");
+    await page.getByRole("button", { name: "Save photo review", exact: true }).click();
+    await expect(page.getByText("approved", { exact: true }).first()).toBeVisible();
+    await page
+      .getByLabel("Review notes", { exact: true })
+      .fill("Verified contact and property details for publication.");
+    await page.getByRole("button", { name: "Save review", exact: true }).click();
     await expect(page.getByText("published", { exact: true }).first()).toBeVisible();
     await publicPage.goto(`/properties?q=${token}&type=bedspace&max=3000`);
     await expect(publicPage.getByTestId("listing-card")).toHaveCount(1);
     await publicPage.getByRole("link", { name: `Test Garden ${token}`, exact: true }).click();
     await expect(publicPage.getByRole("heading", { level: 1 })).toHaveText(`Test Garden ${token}`);
     await expect(publicPage.getByText("Room A · Bed 1", { exact: true })).toBeVisible();
+    await expect(
+      publicPage.getByRole("img", { name: "Room A with study area", exact: true }),
+    ).toBeVisible();
+    expect((await publicPage.request.get(photoPath!)).status()).toBe(200);
+    const optimized = await publicPage.request.get(
+      `/_next/image?url=${encodeURIComponent(photoPath!)}&w=640&q=75`,
+    );
+    expect(optimized.status()).not.toBe(200);
     await expect(publicPage.getByText("₱2,500.50", { exact: true })).toHaveCount(2);
     await expect(publicPage.getByText("Private address 123", { exact: true })).toHaveCount(0);
     await expect(publicPage.getByText("09123456789", { exact: true })).toHaveCount(0);
@@ -146,6 +219,12 @@ test("owner creates a property and room, admin reviews it, and renters see only 
     await expect(publicPage.getByRole("heading", { level: 1 })).toHaveText(
       "This space isn’t here.",
     );
+    expect((await publicPage.request.get(photoPath!)).status()).toBe(404);
+    await page.getByRole("button", { name: "Remove photo", exact: true }).click();
+    await expect(
+      page.getByRole("img", { name: "Room A with study area", exact: true }),
+    ).toHaveCount(0);
+    expect((await page.request.get(photoPath!)).status()).toBe(404);
     const report = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
       .analyze();

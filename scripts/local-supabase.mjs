@@ -21,6 +21,7 @@ const values = {
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: anon,
   NEXT_PUBLIC_SITE_URL: "http://127.0.0.1:3000",
   TEST_SUPABASE_SERVICE_KEY: service,
+  SUPABASE_SECRET_KEY: service,
   TEST_DATABASE_URL: db,
 };
 writeFileSync(

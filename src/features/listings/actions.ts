@@ -17,6 +17,8 @@ const field = (form: FormData, key: string) => String(form.get(key) ?? "");
 const failure = (error: { message: string; code?: string }): ListingState => {
   if (error.code === "23505")
     return { message: "That web address or room label is already used. Choose another." };
+  if (error.message.includes("PHOTOS_NEED_REVIEW"))
+    return { message: "Review every pending photo before publishing this listing." };
   if (error.message.includes("STALE_REVIEW"))
     return { message: "This property changed. Reload and review the latest version." };
   if (error.message.includes("INCOMPLETE_PROPERTY"))

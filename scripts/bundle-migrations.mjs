@@ -23,3 +23,10 @@ writeFileSync(
   "supabase/upgrade-listings.sql",
   `-- Existing PuyoHub projects with migrations 001–003 already applied. Run once.\nbegin;\n${upgrade}\ncommit;\n`,
 );
+
+const photos = parts.find((part) => part.startsWith("-- Source: 20261017000500_"));
+if (!photos) throw new Error("Photo migration is missing.");
+writeFileSync(
+  "supabase/upgrade-photos.sql",
+  `-- Existing PuyoHub projects with migrations 001–004 applied. Run once.\nbegin;\n${photos}\ncommit;\n`,
+);

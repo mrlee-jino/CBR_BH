@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireRole } from "@/features/auth/account";
 import { DashboardShell } from "@/features/auth/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";
+import { PhotoCleanup } from "@/features/photos/forms";
 export const metadata = { title: "Listing review" };
 export default async function Admin({
   searchParams,
@@ -66,6 +67,10 @@ export default async function Admin({
       {data.length === 100 && (
         <p>Showing the oldest 100 listings. Process these to see the rest of the queue.</p>
       )}
+      <section className="account-card">
+        <h2>Photo storage cleanup</h2>
+        <PhotoCleanup />
+      </section>
     </DashboardShell>
   );
 }

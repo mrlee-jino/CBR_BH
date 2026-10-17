@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { House, MapPin, ArrowUpRight } from "lucide-react";
 import { formatPeso } from "@/lib/money";
@@ -10,8 +11,21 @@ export function ListingCard({ property: p }: { property: Listing }) {
         className="listing-placeholder"
         aria-label={`View ${p.title}`}
       >
-        <House size={54} strokeWidth={1} />
-        <span>Property photos coming soon</span>
+        {p.cover ? (
+          <Image
+            unoptimized
+            src={`/media/photos/${p.cover.id}`}
+            alt={p.cover.alt_text}
+            fill
+            sizes="(max-width:600px) 100vw, 33vw"
+            style={{ objectFit: "cover" }}
+          />
+        ) : (
+          <>
+            <House size={54} strokeWidth={1} />
+            <span>No property photos yet</span>
+          </>
+        )}
         <span className="image-badge">Admin reviewed</span>
       </Link>
       <div className="card-body">

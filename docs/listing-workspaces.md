@@ -6,7 +6,7 @@ Editing an advertised property or unit pauses publication and invalidates prior 
 
 Public `/properties` search and `/properties/[slug]` pages use explicit anonymous RPC projections. They expose no owner identifiers, exact street address, or contact information. Search filters individual eligible units before calculating the displayed minimum rent; a cheap bedspace cannot make an expensive private room pass the budget filter. Results are paginated, 24 per page, with bounded offsets. Homepage features the latest three reviewed listings. Suspended owners and nonpublished properties disappear immediately. No fictional fallback is used on errors or empty results.
 
-Fictional fixtures remain only under `/preview/rentals` and are excluded from indexing. Photo uploads remain closed; live cards use a clearly labeled placeholder rather than fictional property photos.
+Fictional fixtures remain only under `/preview/rentals` and are excluded from indexing. Secure photo uploads and admin photo review are now implemented; see `secure-photos.md` for the additional upgrade. Listings without approved photos use a labeled placeholder.
 
 ## Hosted upgrade for existing installations
 

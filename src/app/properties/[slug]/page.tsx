@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { House } from "lucide-react";
 import { getListing } from "@/features/listings/public";
 import { formatPeso } from "@/lib/money";
+import { PublicPhotoGallery } from "@/features/photos/gallery";
 export const dynamic = "force-dynamic";
 export async function generateMetadata({
   params,
@@ -37,10 +38,14 @@ export default async function Property({ params }: { params: Promise<{ slug: str
           </p>
         </div>
       </div>
-      <div className="listing-placeholder detail-placeholder">
-        <House size={78} strokeWidth={1} aria-hidden="true" />
-        <p>Property photos coming soon</p>
-      </div>
+      {result.photos.length ? (
+        <PublicPhotoGallery photos={result.photos} />
+      ) : (
+        <div className="listing-placeholder detail-placeholder">
+          <House size={78} strokeWidth={1} aria-hidden="true" />
+          <p>No property photos yet</p>
+        </div>
+      )}
       <div className="detail-layout">
         <div>
           <section className="detail-section">

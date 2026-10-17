@@ -364,37 +364,55 @@ export type Database = {
       property_photos: {
         Row: {
           alt_text: string;
+          byte_size: number | null;
           created_at: string;
+          height: number | null;
           id: string;
           is_cover: boolean;
           property_id: string;
+          reserved_version: number | null;
+          review_note: string | null;
           sort_order: number;
           status: string;
           storage_path: string;
           unit_id: string | null;
+          upload_state: string;
+          width: number | null;
         };
         ComputedFields: never;
         Insert: {
           alt_text: string;
+          byte_size?: number | null;
           created_at?: string;
+          height?: number | null;
           id?: string;
           is_cover?: boolean;
           property_id: string;
+          reserved_version?: number | null;
+          review_note?: string | null;
           sort_order?: number;
           status?: string;
           storage_path: string;
           unit_id?: string | null;
+          upload_state?: string;
+          width?: number | null;
         };
         Update: {
           alt_text?: string;
+          byte_size?: number | null;
           created_at?: string;
+          height?: number | null;
           id?: string;
           is_cover?: boolean;
           property_id?: string;
+          reserved_version?: number | null;
+          review_note?: string | null;
           sort_order?: number;
           status?: string;
           storage_path?: string;
           unit_id?: string | null;
+          upload_state?: string;
+          width?: number | null;
         };
         Relationships: [
           {
@@ -720,6 +738,16 @@ export type Database = {
           title: string;
         }[];
       };
+      complete_property_photo: {
+        Args: {
+          p_actor_id: string;
+          p_byte_size: number;
+          p_height: number;
+          p_photo_id: string;
+          p_width: number;
+        };
+        Returns: undefined;
+      };
       create_manual_allocation: {
         Args: {
           p_end_date: string;
@@ -738,13 +766,33 @@ export type Database = {
         Args: { p_decision: string; p_reason?: string; p_request_id: string };
         Returns: undefined;
       };
+      edit_property_photo: { Args: { p_action: string; p_photo_id: string }; Returns: string };
       end_allocation: { Args: { p_allocation_id: string; p_end_date: string }; Returns: undefined };
+      get_listing_covers: {
+        Args: { p_property_ids: string[] };
+        Returns: {
+          alt_text: string;
+          height: number;
+          id: string;
+          is_cover: boolean;
+          property_id: string;
+          width: number;
+        }[];
+      };
       get_my_listing_reviews: {
         Args: { p_property_id: string };
         Returns: {
           decision: string;
           occurred_at: string;
           reason: string;
+        }[];
+      };
+      get_photo_access: { Args: { p_photo_id: string }; Returns: string };
+      get_photo_cleanup_batch: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          id: string;
+          storage_path: string;
         }[];
       };
       get_property_contact: {
@@ -754,6 +802,16 @@ export type Database = {
           contact_name: string;
           contact_phone: string;
           street_address: string;
+        }[];
+      };
+      get_property_photos: {
+        Args: { p_property_id: string };
+        Returns: {
+          alt_text: string;
+          height: number;
+          id: string;
+          is_cover: boolean;
+          width: number;
         }[];
       };
       get_public_listing: {
@@ -793,6 +851,13 @@ export type Database = {
         Returns: undefined;
       };
       release_future_block: { Args: { p_allocation_id: string }; Returns: undefined };
+      reserve_property_photo: {
+        Args: { p_alt_text: string; p_property_id: string };
+        Returns: {
+          id: string;
+          storage_path: string;
+        }[];
+      };
       resolve_report: { Args: { p_report_id: string; p_status: string }; Returns: undefined };
       review_listing: {
         Args: {
@@ -801,6 +866,10 @@ export type Database = {
           p_property_id: string;
           p_reason: string;
         };
+        Returns: undefined;
+      };
+      review_property_photo: {
+        Args: { p_decision: string; p_note: string; p_photo_id: string };
         Returns: undefined;
       };
       save_property_draft: {

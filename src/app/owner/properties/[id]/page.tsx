@@ -5,6 +5,9 @@ import { requireRole } from "@/features/auth/account";
 import { DashboardShell } from "@/features/auth/dashboard-shell";
 import { PropertyForm, UnitForm, SubmitForm } from "@/features/listings/forms";
 import { createClient } from "@/lib/supabase/server";
+import { UploadPhoto } from "@/features/photos/forms";
+import { ManagedPhotos } from "@/features/photos/gallery";
+import { photoServiceConfigured } from "@/features/photos/service";
 export const metadata = { title: "Manage property" };
 export default async function EditProperty({ params }: { params: Promise<{ id: string }> }) {
   const account = await requireRole("owner");
@@ -19,7 +22,7 @@ export default async function EditProperty({ params }: { params: Promise<{ id: s
     .maybeSingle();
   if (error) throw new Error("Could not load property.");
   if (!p) notFound();
-  const [details, units, allocations, reviews] = await Promise.all([
+  const [details, units, allocations, reviews, photos] = await Promise.all([
     client.from("property_private_details").select("*").eq("property_id", id).maybeSingle(),
     client.from("units").select("*").eq("property_id", id).order("label"),
     client
@@ -30,8 +33,16 @@ export default async function EditProperty({ params }: { params: Promise<{ id: s
       .order("start_date")
       .limit(100),
     client.rpc("get_my_listing_reviews", { p_property_id: id }),
+    client
+      .from("property_photos")
+      .select("id,alt_text,width,height,is_cover,status,review_note")
+      .eq("property_id", id)
+      .eq("upload_state", "ready")
+      .order("is_cover", { ascending: false })
+      .order("created_at")
+      .limit(12),
   ]);
-  if (details.error || units.error || allocations.error || reviews.error)
+  if (details.error || units.error || allocations.error || reviews.error || photos.error)
     throw new Error("Could not load property details.");
   const editable = ["draft", "paused", "rejected", "published"].includes(p.status);
   return (
@@ -68,6 +79,20 @@ export default async function EditProperty({ params }: { params: Promise<{ id: s
             <p>Editing is unavailable in this status.</p>
           </>
         )}
+      </section>
+      <section className="account-card">
+        <h2>Property photos</h2>
+        <p>
+          New photos stay private until reviewed. Uploading, removing, or changing a published
+          property’s cover pauses it for another review.
+        </p>
+        <ManagedPhotos photos={photos.data} editable={editable} />
+        {editable &&
+          (photoServiceConfigured() ? (
+            <UploadPhoto propertyId={id} />
+          ) : (
+            <p className="form-message">Photo uploads are temporarily unavailable.</p>
+          ))}
       </section>
       <section className="account-card">
         <h2>Rooms and bedspaces</h2>

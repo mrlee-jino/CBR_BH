@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { randomUUID, createHmac } from "node:crypto";
 import { readFileSync } from "node:fs";
 import pg from "pg";
+import sharp from "sharp";
 import { createClient } from "@supabase/supabase-js";
 import { localTestEnv } from "../../scripts/test-env.mjs";
 
@@ -682,6 +683,171 @@ test("public listing search filters individual unit offers and never exposes pri
   assert.equal(ok(await anon.rpc("get_public_listing", { p_slug: slug })).length, 0);
 });
 
+test("photos require server processing, owner authorization, separate moderation, and private delivery", async () => {
+  const target = await published(users.ownerA.client, "Photo privacy fixture");
+  denied(
+    await users.ownerB.client.rpc("reserve_property_photo", {
+      p_property_id: target.id,
+      p_alt_text: "Unauthorized",
+    }),
+  );
+  const photo = ok(
+    await users.ownerA.client.rpc("reserve_property_photo", {
+      p_property_id: target.id,
+      p_alt_text: "Private room photo",
+    }),
+  )[0];
+  const bytes = await sharp({
+    create: { width: 32, height: 16, channels: 3, background: "#b39ddb" },
+  })
+    .webp()
+    .toBuffer();
+  denied(
+    await users.ownerA.client.storage
+      .from("property-photos")
+      .upload(photo.storage_path, bytes, { contentType: "image/webp" }),
+  );
+  const complete = {
+    p_photo_id: photo.id,
+    p_actor_id: users.ownerA.id,
+    p_width: 32,
+    p_height: 16,
+    p_byte_size: bytes.length,
+  };
+  denied(await users.ownerA.client.rpc("complete_property_photo", complete));
+  denied(await root.rpc("complete_property_photo", complete)); // No object has been stored.
+  ok(
+    await root.storage
+      .from("property-photos")
+      .upload(photo.storage_path, bytes, { contentType: "image/webp" }),
+  );
+  denied(await root.rpc("complete_property_photo", { ...complete, p_actor_id: users.ownerB.id }));
+  ok(await root.rpc("complete_property_photo", complete));
+  assert.equal(
+    ok(await users.ownerA.client.from("properties").select("status").eq("id", target.id).single())
+      .status,
+    "paused",
+  );
+  assert.equal(
+    ok(await users.ownerA.client.rpc("get_photo_access", { p_photo_id: photo.id })),
+    photo.storage_path,
+  );
+  assert.equal(ok(await anon.rpc("get_photo_access", { p_photo_id: photo.id })), null);
+  assert.equal(
+    ok(await users.ownerB.client.rpc("get_photo_access", { p_photo_id: photo.id })),
+    null,
+  );
+  assert.equal(ok(await anon.rpc("get_property_photos", { p_property_id: target.id })).length, 0);
+  ok(await users.ownerA.client.rpc("submit_property", { p_property_id: target.id }));
+  let version = ok(
+    await users.ownerA.client.from("properties").select("version").eq("id", target.id).single(),
+  ).version;
+  const premature = await users.admin.client.rpc("review_listing", {
+    p_property_id: target.id,
+    p_expected_version: version,
+    p_decision: "published",
+    p_reason: "Ready to publish",
+  });
+  assert.match(premature.error.message, /PHOTOS_NEED_REVIEW/);
+  denied(
+    await users.ownerA.client.rpc("review_property_photo", {
+      p_photo_id: photo.id,
+      p_decision: "approved",
+      p_note: "Self approval is forbidden",
+    }),
+  );
+  ok(
+    await users.admin.client.rpc("review_property_photo", {
+      p_photo_id: photo.id,
+      p_decision: "approved",
+      p_note: "Clear property photo checked",
+    }),
+  );
+  version = ok(
+    await users.ownerA.client.from("properties").select("version").eq("id", target.id).single(),
+  ).version;
+  ok(
+    await users.admin.client.rpc("review_listing", {
+      p_property_id: target.id,
+      p_expected_version: version,
+      p_decision: "published",
+      p_reason: "Property and photos reviewed",
+    }),
+  );
+  assert.equal(
+    ok(await anon.rpc("get_property_photos", { p_property_id: target.id }))[0].id,
+    photo.id,
+  );
+  assert.equal(
+    ok(await anon.rpc("get_listing_covers", { p_property_ids: [target.id] }))[0].id,
+    photo.id,
+  );
+  assert.equal(
+    ok(await anon.rpc("get_photo_access", { p_photo_id: photo.id })),
+    photo.storage_path,
+  );
+  denied(await anon.storage.from("property-photos").download(photo.storage_path));
+  ok(
+    await users.ownerA.client.rpc("edit_property_photo", {
+      p_photo_id: photo.id,
+      p_action: "cover",
+    }),
+  );
+  assert.equal(
+    ok(await anon.rpc("get_photo_access", { p_photo_id: photo.id })),
+    null,
+    "Pausing must revoke public delivery immediately",
+  );
+  ok(
+    await users.ownerA.client.rpc("edit_property_photo", {
+      p_photo_id: photo.id,
+      p_action: "remove",
+    }),
+  );
+  assert.equal(
+    ok(await users.ownerA.client.rpc("get_photo_access", { p_photo_id: photo.id })),
+    null,
+  );
+  denied(await users.ownerA.client.rpc("get_photo_cleanup_batch"));
+  assert.ok(
+    ok(await users.admin.client.rpc("get_photo_cleanup_batch")).some((p) => p.id === photo.id),
+  );
+});
+
+test("photo reservations enforce per-property capacity and per-owner hourly quotas", async () => {
+  const target = await published(users.ownerB.client, "Photo quota fixture");
+  for (let i = 0; i < 12; i++)
+    ok(
+      await users.ownerB.client.rpc("reserve_property_photo", {
+        p_property_id: target.id,
+        p_alt_text: `Room photo ${i}`,
+      }),
+    );
+  assert.match(
+    (
+      await users.ownerB.client.rpc("reserve_property_photo", {
+        p_property_id: target.id,
+        p_alt_text: "Thirteenth photo",
+      })
+    ).error.message,
+    /PHOTO_LIMIT/,
+  );
+  await db.query(
+    "insert into public.audit_events(actor_id,action,entity_type,entity_id) select $1,'photo.reserved','property',$2 from generate_series(1,8)",
+    [users.ownerB.id, target.id],
+  );
+  const second = await published(users.ownerB.client, "Hourly quota fixture");
+  assert.match(
+    (
+      await users.ownerB.client.rpc("reserve_property_photo", {
+        p_property_id: second.id,
+        p_alt_text: "Too many attempts",
+      })
+    ).error.message,
+    /PHOTO_RATE_LIMIT/,
+  );
+});
+
 test("incremental SQL Editor upgrade preserves existing listings and records only migration 004", async () => {
   const source = readFileSync("supabase/upgrade-listings.sql", "utf8");
   const sql = source.slice(source.indexOf("begin;\n") + 7, source.lastIndexOf("commit;"));
@@ -714,13 +880,13 @@ test("SQL Editor bundle bootstraps a fresh app schema and records migration vers
   await db.query("begin");
   try {
     await db.query(
-      "drop policy if exists puyohub_photos_closed on storage.objects; drop schema public cascade; drop schema private cascade; create schema public; grant usage on schema public to anon,authenticated,service_role; delete from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400')",
+      "drop policy if exists puyohub_photos_closed on storage.objects; drop schema public cascade; drop schema private cascade; create schema public; grant usage on schema public to anon,authenticated,service_role; delete from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500')",
     );
     await db.query(sql);
     const result = await db.query(
-      "select count(*)::int as count from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400')",
+      "select count(*)::int as count from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500')",
     );
-    assert.equal(result.rows[0].count, 4);
+    assert.equal(result.rows[0].count, 5);
     const profiles = await db.query("select count(*)::int as count from public.profiles");
     assert.ok(profiles.rows[0].count >= 6, "Existing Auth accounts should be backfilled safely");
   } finally {

@@ -4,9 +4,9 @@
 
 The versioned migrations create the marketplace tables, RLS policies, signup profile/role trigger, private photo bucket, safe public read functions, owner activation, controlled profile edits, moderation/suspension functions, and booking/viewing RPCs. Confirmed allocations use a PostgreSQL exclusion constraint and deferred consistency triggers. Admin access requires both a database role and an MFA `aal2` session.
 
-The app provides signup, email verification and resend, login/logout, password recovery, profile settings, owner activation, and TOTP enrollment/challenge. Account/owner/admin routes verify the user server-side. Owner property/room forms, admin review, and public database discovery are implemented; see `docs/listing-workspaces.md` for the incremental hosted upgrade. Booking and viewing UI remain later milestones. Photo upload is intentionally denied until validation/re-encoding and review are implemented.
+The app provides signup, email verification and resend, login/logout, password recovery, profile settings, owner activation, and TOTP enrollment/challenge. Account/owner/admin routes verify the user server-side. Owner property/room forms, admin review, and public database discovery are implemented; see `docs/listing-workspaces.md` for the incremental hosted upgrade. Booking and viewing UI remain later milestones. Secure photo processing/review is implemented; see `secure-photos.md` for migration 005 and server-only key setup. Direct browser Storage access remains denied.
 
-The code uses the publishable key through the current user's session. No privileged service key is used by application code. Test service keys exist only in the ignored local test configuration and are guarded against hosted URLs.
+The code uses the publishable key through the current user's session. A server-only privileged key is used solely for validated photo Storage operations, authorized image delivery, and file cleanup. Test service keys exist only in the ignored local test configuration and are guarded against hosted URLs.
 
 ## Apply to the hosted development project
 
@@ -15,7 +15,7 @@ The publishable key cannot execute migrations. This milestone's hosted applicati
 For a fresh, dedicated project:
 
 1. Review `supabase/migrations/` and the generated `supabase/bootstrap.sql`.
-2. Open the intended development project in the Supabase dashboard and its SQL Editor. Paste and run `supabase/bootstrap.sql` **once** as the project operator. It applies all four migrations in one transaction, backfills existing Auth accounts as renters, and records the migration versions for later CLI use. It does not create an admin or fictional property inventory.
+2. Open the intended development project in the Supabase dashboard and its SQL Editor. Paste and run `supabase/bootstrap.sql` **once** as the project operator. It applies all five migrations in one transaction, backfills existing Auth accounts as renters, and records the migration versions for later CLI use. It does not create an admin or fictional property inventory.
 3. Confirm that `profiles`, `account_roles`, `properties`, `units`, `booking_requests`, and the other application tables exist with RLS enabled. Existing tables with conflicting names will cause the transaction to fail; do not drop existing data to force it through. Use a dedicated development project or plan a separate migration.
 4. Add the public application settings to the app environment: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `NEXT_PUBLIC_SITE_URL`. The site URL is the exact canonical origin (for local development, `http://127.0.0.1:3000`; for deployment, your actual HTTPS origin). Restart/rebuild after changing public settings.
 5. In Supabase Auth URL configuration, set **Site URL** to that origin and allow its `/auth/confirm` callback. Keep staging/production redirect allowlists separate; avoid broad production wildcard redirects.
@@ -83,5 +83,5 @@ This runner's restrictive file umask also required the public email template dir
 - Pending requests do not hold inventory. Approval locks property → unit → request and writes the allocation and decision in one transaction. Conflicts leave the request pending. Unit edits pause publication and increment the offer version.
 - Viewing requests never reserve inventory. Address/contact RPCs disclose only consented participant fields and apply status/expiry windows; base private tables stay protected.
 - Audit actions record actor, action, entity, and time. They do not store full contact/request payloads. Detailed moderation reason persistence and support UI can be added with the moderation milestone.
-- There is no public upload/signing path yet. The private bucket denies ordinary client uploads until the image processing/review pipeline is built.
+- The image pipeline validates and re-encodes uploads before privileged Storage writes. The private bucket denies direct ordinary-client Storage access; image delivery authorizes each request. See `secure-photos.md`.
 - Before public launch, verify provider SMTP, CAPTCHA/rate limits, privacy/terms, monitoring, backups/restore, and a support process. The current changes establish a tested development foundation, not a completed marketplace launch.

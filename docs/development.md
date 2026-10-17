@@ -21,6 +21,7 @@ Runtime: Node 24.19.0; package manager: npm 11.9.0. Direct dependencies are exac
 - `src/components/layout`: shared navigation and footer.
 - `src/features/properties`: fictional demo fixtures/cards, shared query parsing, search controls, amenity icons, and request explanation.
 - `src/features/listings`: owner/admin server actions and forms, anonymous live listing queries, and live cards.
+- `src/features/photos`: bounded raster processing, server-only Storage client, upload/review/cleanup controls, and galleries.
 - `src/lib/money.ts`: consistent peso display that preserves centavos on fractional prices.
 - `public/images`: original SVG illustrations. These contain no third-party photography, remote requests, scripts, or precise property coordinates.
 - `tests/e2e`: behavior/accessibility checks against the production server.
