@@ -113,7 +113,7 @@ These are security and integrity tests that must run against the database, not m
 
 ## 3. Connect authentication and account workspaces
 
-Implement signup/verification, login/logout, password recovery, SSR session refresh, validated same-origin return URLs, private contact settings, and owner activation. Add server-side route/data guards and database-backed permissions. Admin is provisioned securely outside signup. Configure admin MFA and enforce it for sensitive admin operations.
+Implement signup/verification, login/logout, password recovery, SSR session refresh, validated same-origin return URLs, private contact settings, and owner activation. Add server-side route/data guards and database-backed permissions. Admin is provisioned securely outside signup. Enforce the active database-assigned admin role for sensitive operations; app authenticator verification is not required.
 
 **Completion check:** a fresh user can verify email, sign in, reload a protected route, sign out, and recover a password. Forged role metadata and direct URL access do not grant owner/admin permissions. Owner activation preserves renter capabilities. Session refresh does not cache private data publicly.
 

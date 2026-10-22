@@ -4,7 +4,6 @@ import AxeBuilder from "@axe-core/playwright";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import pg from "pg";
-import { currentTotp } from "../helpers/totp.mjs";
 
 // Never create test users or send recovery emails to a hosted project.
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -194,7 +193,7 @@ test("token-hash confirmation is single-use and ignores off-site redirects", asy
   await expect(page).toHaveURL(/\/login\?message=invalid-link$/);
 });
 
-test("assigned admin must enroll and verify an authenticator before protected access", async ({
+test("assigned admins access their workspace with a password while role and suspension checks remain", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -219,25 +218,10 @@ test("assigned admin must enroll and verify an authenticator before protected ac
   await page.getByLabel("Email address").fill(email);
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page).toHaveURL(/\/dashboard\/security$/);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Administrator security.");
-  const adminNav = page.getByRole("navigation", { name: "Account navigation" });
-  await expect(adminNav.getByRole("link", { name: "Admin dashboard", exact: true })).toBeVisible();
-  await expect(adminNav.getByRole("link", { name: "My requests", exact: true })).toHaveCount(0);
-  await expect(
-    page.getByRole("link", { name: "Continue to administration", exact: true }),
-  ).toHaveCount(0);
-  await page.getByRole("button", { name: "Set up an authenticator" }).click();
-  await page.getByText("Enter the setup key manually").click();
-  const secret = await page.locator(".mfa-setup code").innerText();
-  await page.getByLabel("Authenticator code").fill(currentTotp(secret));
-  await page.getByRole("button", { name: "Verify authenticator", exact: true }).click();
-  await expect(
-    page.getByRole("status").filter({ hasText: "verification is complete" }),
-  ).toBeVisible();
-  await page.getByRole("link", { name: "Continue to administration", exact: true }).click();
   await expect(page).toHaveURL(/\/admin$/);
+  const adminNav = page.getByRole("navigation", { name: "Account navigation" });
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Platform administration.");
+  await expect(adminNav.getByRole("link", { name: "My requests", exact: true })).toHaveCount(0);
   await expect(page.getByLabel("Listing totals")).toBeVisible();
   expect(
     (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze())
@@ -266,7 +250,11 @@ test("assigned admin must enroll and verify an authenticator before protected ac
   await expect(page).toHaveURL(/\/dashboard\/settings$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Administrator profile.");
   await page.goto("/admin");
-  await expect(page).toHaveURL(/\/dashboard\/security$/);
+  await expect(page).toHaveURL(/\/admin$/);
+  await page.goto("/dashboard/security");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Administrator security.");
+  await expect(page.getByRole("button", { name: "Set up an authenticator" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Reset your password", exact: true })).toBeVisible();
   // A suspended administrator must reach the suspension message without a redirect loop.
   const db = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL });
   await db.connect();

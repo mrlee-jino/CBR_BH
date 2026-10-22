@@ -2,7 +2,7 @@
 
 ## What is implemented
 
-The versioned migrations create the marketplace tables, RLS policies, signup profile/role trigger, private photo bucket, safe public read functions, owner activation, controlled profile edits, moderation/suspension functions, and booking/viewing RPCs. Confirmed allocations use a PostgreSQL exclusion constraint and deferred consistency triggers. Admin access requires both a database role and an MFA `aal2` session.
+The versioned migrations create the marketplace tables, RLS policies, signup profile/role trigger, private photo bucket, safe public read functions, owner activation, controlled profile edits, moderation/suspension functions, and booking/viewing RPCs. Confirmed allocations use a PostgreSQL exclusion constraint and deferred consistency triggers. Admin access requires password sign-in and an active database-assigned administrator role.
 
 The app provides signup, email verification and resend, login/logout, password recovery, profile settings, owner activation, and TOTP enrollment/challenge. Account/owner/admin routes verify the user server-side. Owner property/room forms, admin review, and public database discovery are implemented; see `docs/listing-workspaces.md` for the incremental hosted upgrade. Booking and viewing UI remain later milestones. Secure photo processing/review is implemented; see `secure-photos.md` for migration 005 and server-only key setup. Direct browser Storage access remains denied.
 
@@ -19,7 +19,7 @@ For a fresh, dedicated project:
 3. Confirm that `profiles`, `account_roles`, `properties`, `units`, `booking_requests`, and the other application tables exist with RLS enabled. Existing tables with conflicting names will cause the transaction to fail; do not drop existing data to force it through. Use a dedicated development project or plan a separate migration.
 4. Add the public application settings to the app environment: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `NEXT_PUBLIC_SITE_URL`. The site URL is the exact canonical origin (for local development, `http://127.0.0.1:3000`; for deployment, your actual HTTPS origin). Restart/rebuild after changing public settings.
 5. In Supabase Auth URL configuration, set **Site URL** to that origin and allow its `/auth/confirm` callback. Keep staging/production redirect allowlists separate; avoid broad production wildcard redirects.
-6. Enable email/password signup and email confirmations, use a minimum password length of 8, and enable TOTP MFA enrollment/verification. The app accepts 8–128 characters for signup and password updates. Existing hosted projects must also set their Supabase Auth minimum to 8; changing the local configuration does not update hosted settings. Configure production email delivery and appropriate Auth rate limits/CAPTCHA before a public launch. Local email tests do not establish hosted SMTP delivery.
+6. Enable email/password signup and email confirmations, use a minimum password length of 8, and leave TOTP enrollment optional for regular accounts. The app accepts 8–128 characters for signup and password updates. Existing hosted projects must also set their Supabase Auth minimum to 8; changing the local configuration does not update hosted settings. Configure production email delivery and appropriate Auth rate limits/CAPTCHA before a public launch. Local email tests do not establish hosted SMTP delivery.
 7. Configure confirmation and recovery email templates using the files in `supabase/templates/`. They send a token hash to `/auth/confirm` with the appropriate type and work across devices. The callback also supports the provider's default PKCE code flow, which needs the initiating browser's verifier cookie. Use templates as HTML, not as literal filesystem paths in the hosted dashboard.
 8. Verify an actual email signup/recovery flow against the deployed or local app connected to the hosted project. Until these settings are applied, local test success does not establish hosted readiness.
 
@@ -38,7 +38,7 @@ where email = 'YOUR_VERIFIED_EMAIL'
 on conflict do nothing;
 ```
 
-Check that exactly the intended user holds the role. Never make this a public RPC or a signup option. Sign in, open `/dashboard/security`, enroll an authenticator, and verify its code. Then `/admin` becomes accessible. Privileged RPCs independently require `aal2`, even if called outside the UI. A new password-only session must verify again. Lost-authenticator recovery requires a controlled operator process; recovery codes and self-service device removal are not implemented.
+Check that exactly the intended user holds the role. Never make this a public RPC or a signup option. Sign in with the assigned account’s email and password, then open `/admin`. Administrator access does not require an authenticator code. Both routes and privileged RPCs enforce the database role and active account status. Existing projects must apply `supabase/upgrade-admin-password.sql` to update the database checks.
 
 ## Local development and testing
 

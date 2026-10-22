@@ -1,6 +1,6 @@
 # Cabahay Users and Reports
 
-Administrators use `/admin/users` and `/admin/reports`. Both routes and every mutation require an active database-assigned administrator role and an MFA-verified session. Private data uses the current administrator’s Supabase session and existing RLS, with no service key in these pages.
+Administrators use `/admin/users` and `/admin/reports`. Both routes and every mutation require an active database-assigned administrator role and a signed-in session. Private data uses the current administrator’s Supabase session and existing RLS, with no service key in these pages.
 
 ## Apply before using account changes
 
@@ -29,4 +29,4 @@ Times are displayed in Philippine time. Report text and account names are render
 
 ## Verification
 
-The isolated local browser workflow covers guest/renter access denial, required admin MFA, self-suspension protection (including form tampering), suspension and restoration with retained reasons, 21-user pagination, report resolution/dismissal and history, stale decisions, malicious report text, accessibility and mobile overflow. Database tests check role/MFA enforcement, retained audit reasons and rejected invalid account changes.
+The isolated local browser workflow covers guest/renter access denial, password-only admin access, self-suspension protection (including form tampering), suspension and restoration with retained reasons, 21-user pagination, report resolution/dismissal and history, stale decisions, malicious report text, accessibility and mobile overflow. Database tests check active-account and assigned-role enforcement, retained audit reasons and rejected invalid account changes.

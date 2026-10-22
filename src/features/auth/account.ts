@@ -33,10 +33,5 @@ export async function requireRole(role: "owner" | "admin", next = `/${role}`) {
   const account = await requireAccount(next);
   if (account.setupRequired || account.profile?.account_status !== "active") redirect("/dashboard");
   if (!account.roles.includes(role)) redirect(role === "owner" ? "/become-an-owner" : "/dashboard");
-  if (role === "admin") {
-    const supabase = await createClient();
-    const { data, error } = await supabase.auth.getClaims();
-    if (error || data?.claims.aal !== "aal2") redirect("/dashboard/security");
-  }
   return account;
 }

@@ -3,7 +3,6 @@ import AxeBuilder from "@axe-core/playwright";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import pg from "pg";
-import { currentTotp } from "../helpers/totp.mjs";
 import { confirmAction } from "../helpers/confirm-action";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -28,7 +27,7 @@ async function search(page: Page, value: string, status: string) {
   await expect(page.getByLabel("Status", { exact: true })).toHaveValue(status);
 }
 
-test("admins manage users and reports with MFA, confirmations, audit reasons and private access", async ({
+test("admins manage users and reports with password sign-in, confirmations, audit reasons and private access", async ({
   page,
   browser,
 }) => {
@@ -96,17 +95,7 @@ test("admins manage users and reports with MFA, confirmations, audit reasons and
     await expect(strangerPage.getByRole("heading", { name: "Manage reports." })).toHaveCount(0);
 
     await login(page, admin.email, password, "/admin/users");
-    await expect(page).toHaveURL(/\/dashboard\/security$/);
-    await page.goto("/admin/reports");
-    await expect(page).toHaveURL(/\/dashboard\/security$/);
-    await page.getByRole("button", { name: "Set up an authenticator" }).click();
-    await page.getByText("Enter the setup key manually").click();
-    const secret = await page.locator(".mfa-setup code").innerText();
-    await page.getByLabel("Authenticator code").fill(currentTotp(secret));
-    await page.getByRole("button", { name: "Verify authenticator", exact: true }).click();
-    await expect(
-      page.getByRole("status").filter({ hasText: "verification is complete" }),
-    ).toBeVisible();
+    await expect(page).toHaveURL(/\/admin\/users$/);
     await page
       .getByRole("navigation", { name: "Account navigation" })
       .getByRole("link", { name: "Users", exact: true })

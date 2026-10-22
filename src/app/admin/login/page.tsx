@@ -9,7 +9,7 @@ export default function AdminLogin() {
   return (
     <AuthShell
       title="Administrator sign in"
-      description="Use your assigned administrator account. An authenticator code is required before you can access administration."
+      description="Sign in with the email and password of your assigned administrator account."
       footer={
         <p>
           Administrator access is assigned by the platform operator. Public signup cannot create an

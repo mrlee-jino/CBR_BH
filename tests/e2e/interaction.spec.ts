@@ -15,7 +15,9 @@ test("signup offers two clear account choices and admin sign-in is separate", as
   await expect(page.getByRole("radio")).toHaveCount(2);
   await page.goto("/admin/login");
   await expect(page.getByRole("heading", { name: "Administrator sign in" })).toBeVisible();
-  await expect(page.getByText(/An authenticator code is required/)).toBeVisible();
+  await expect(
+    page.getByText(/email and password of your assigned administrator account/),
+  ).toBeVisible();
   await page.goto("/preview/rentals");
   await expect(page.getByRole("link", { name: "Administration", exact: true })).toHaveCount(0);
 });

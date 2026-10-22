@@ -42,7 +42,7 @@ export async function savePromotion(_: PromotionState, form: FormData): Promise<
   if (error)
     return {
       message:
-        "Could not update featured placement. Check that the listing is published, the dates are valid, and your admin MFA session is verified.",
+        "Could not update featured placement. Check that the listing is published, the dates are valid, and your administrator account is active.",
     };
   for (const path of ["/", "/properties", "/admin", `/admin/properties/${d.id}`])
     revalidatePath(path);

@@ -11,11 +11,11 @@ Signup now asks **Renter** or **Property owner**. Every verified account retains
 1. Register through normal signup using your own email, choose Renter, and confirm the email. Your administrator role is separate from the public signup choice. Use a unique password; never put it in source files or send it in chat.
 2. In Supabase SQL Editor, open `supabase/provision-admin.sql`, replace `REPLACE_WITH_YOUR_VERIFIED_EMAIL` with the exact verified email, and run it once. It adds only the admin role to that verified account. Do not add other accounts unless you intend to authorize another administrator.
 3. Visit **`/admin/login`** on your website. This separate login address is not linked from public navigation. It uses your regular verified account credentials; there is no shared or hardcoded admin password.
-4. After password login, open **`/dashboard/security`** if prompted, set up an authenticator, and verify its six-digit code. Then open **`/admin`**. A new password-only session needs authenticator verification again.
+4. After password login, open **`/admin`**. No authenticator setup or code is required. Existing projects must first apply **`supabase/upgrade-admin-password.sql`** once.
 
-A hidden URL is not the security boundary: other people can guess `/admin/login`, but they cannot use administration without the database-assigned admin role, an active account, and verified MFA. Admin links appear in authenticated account navigation only for administrators. Publication, promotion, contact, and storage RPCs independently enforce their database permissions.
+A hidden URL is not the security boundary: other people can guess `/admin/login`, but they cannot use administration without the database-assigned admin role, an active account, and a signed-in session. Admin links appear in authenticated account navigation only for administrators. Publication, promotion, contact, and storage RPCs independently enforce their database permissions.
 
-The app does not yet have an administrator user-management interface, recovery codes, or self-service authenticator replacement. Lost-authenticator recovery and administrator-role changes require a controlled Supabase operator process. Keep your authenticator securely backed up.
+User and report management are available at `/admin/users` and `/admin/reports`. Administrator-role assignment remains a controlled Supabase operator action; public signup cannot assign it.
 
 ## Daily operation
 
@@ -28,4 +28,4 @@ The app does not yet have an administrator user-management interface, recovery c
 
 ## Validation status
 
-Run `npm run check` in the isolated local Supabase environment before deploying. The new security tests cover anonymous public search, promotion authorization/MFA, sorting, expiration, hidden listings, and upgrade preservation. The current Windows machine lacks Docker/local Supabase, so those integration tests and generated-type verification remain pending here. Browser tests that do not need a database cover the signup choices and separate admin sign-in page.
+Run `npm run check` in the isolated local Supabase environment before deploying. The new security tests cover anonymous public search, promotion role authorization, sorting, expiration, hidden listings, and upgrade preservation. Local database and browser tests cover password-only administrator sessions, role revocation, suspended accounts, listing moderation, and user/report management. Hosted activation still requires applying the SQL upgrade and deploying the app.

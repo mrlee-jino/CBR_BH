@@ -1,6 +1,6 @@
 import { before, after, test } from "node:test";
 import assert from "node:assert/strict";
-import { randomUUID, createHmac } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import pg from "pg";
 import sharp from "sharp";
@@ -28,19 +28,6 @@ function ok(response) {
 }
 function denied(response) {
   assert.ok(response.error, "Operation should be forbidden");
-}
-function totp(secret) {
-  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-  let bits = "";
-  for (const char of secret.toUpperCase().replace(/=+$/, ""))
-    bits += alphabet.indexOf(char).toString(2).padStart(5, "0");
-  const bytes = [];
-  for (let i = 0; i + 8 <= bits.length; i += 8) bytes.push(parseInt(bits.slice(i, i + 8), 2));
-  const counter = Buffer.alloc(8);
-  counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 30000)));
-  const hash = createHmac("sha1", Buffer.from(bytes)).update(counter).digest();
-  const offset = hash[19] & 15;
-  return ((hash.readUInt32BE(offset) & 0x7fffffff) % 1000000).toString().padStart(6, "0");
 }
 async function request(
   client,
@@ -119,15 +106,6 @@ before(async () => {
   await db.query("insert into public.account_roles(user_id,role) values($1,'admin')", [
     users.admin.id,
   ]);
-  const factor = ok(
-    await users.admin.client.auth.mfa.enroll({ factorType: "totp", friendlyName: "Database test" }),
-  );
-  ok(
-    await users.admin.client.auth.mfa.challengeAndVerify({
-      factorId: factor.id,
-      code: totp(factor.totp.secret),
-    }),
-  );
   ok(await users.ownerA.client.rpc("activate_owner"));
   ok(await users.ownerB.client.rpc("activate_owner"));
   ({ id: property, unit } = await published(users.ownerA.client, "Local public fixture"));
@@ -210,7 +188,7 @@ test("public browsing exposes only published projections, not base or private ro
     }),
   );
 });
-test("admin requires database role plus MFA; ordinary JWT metadata cannot moderate", async () => {
+test("admin uses password sessions but still requires the active database role", async () => {
   denied(
     await users.renterA.client.rpc("moderate_property", {
       p_property_id: property,
@@ -224,14 +202,39 @@ test("admin requires database role plus MFA; ordinary JWT metadata cannot modera
     options,
   );
   ok(await weakAdmin.auth.signInWithPassword({ email: users.admin.email, password }));
-  assert.equal(ok(await weakAdmin.from("audit_events").select("id")).length, 0);
-  denied(
+  assert.equal(ok(await weakAdmin.auth.getClaims()).claims.aal, "aal1");
+  assert.ok(ok(await weakAdmin.from("audit_events").select("id")).length > 0);
+  ok(
     await weakAdmin.rpc("suspend_account", {
       p_user_id: users.renterA.id,
       p_suspended: true,
-      p_reason: "Must require MFA",
+      p_reason: "Password-session admin suspension",
     }),
   );
+  ok(
+    await weakAdmin.rpc("suspend_account", {
+      p_user_id: users.renterA.id,
+      p_suspended: false,
+      p_reason: "Password-session admin restore",
+    }),
+  );
+  await db.query("delete from public.account_roles where user_id=$1 and role='admin'", [
+    users.admin.id,
+  ]);
+  try {
+    assert.equal(ok(await weakAdmin.from("audit_events").select("id")).length, 0);
+    denied(
+      await weakAdmin.rpc("moderate_property", {
+        p_property_id: property,
+        p_decision: "suspended",
+        p_reason: "Revoked role",
+      }),
+    );
+  } finally {
+    await db.query("insert into public.account_roles(user_id,role) values($1,'admin')", [
+      users.admin.id,
+    ]);
+  }
   denied(
     await users.ownerA.client
       .from("properties")
@@ -1000,13 +1003,13 @@ test("SQL Editor bundle bootstraps a fresh app schema and records migration vers
   await db.query("begin");
   try {
     await db.query(
-      "drop policy if exists puyohub_photos_closed on storage.objects; drop schema public cascade; drop schema private cascade; create schema public; grant usage on schema public to anon,authenticated,service_role; delete from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319','20261017154740','20261022163000','20261023000100','20261023000200')",
+      "drop policy if exists puyohub_photos_closed on storage.objects; drop schema public cascade; drop schema private cascade; create schema public; grant usage on schema public to anon,authenticated,service_role; delete from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319','20261017154740','20261022163000','20261023000100','20261023000200','20261023000300')",
     );
     await db.query(sql);
     const result = await db.query(
-      "select count(*)::int as count from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319','20261017154740','20261022163000','20261023000100','20261023000200')",
+      "select count(*)::int as count from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319','20261017154740','20261022163000','20261023000100','20261023000200','20261023000300')",
     );
-    assert.equal(result.rows[0].count, 10);
+    assert.equal(result.rows[0].count, 11);
     const profiles = await db.query("select count(*)::int as count from public.profiles");
     assert.ok(profiles.rows[0].count >= 6, "Existing Auth accounts should be backfilled safely");
   } finally {
@@ -1014,7 +1017,7 @@ test("SQL Editor bundle bootstraps a fresh app schema and records migration vers
   }
 });
 
-test("featured placement requires admin MFA and keeps anonymous public search and user sorting intact", async () => {
+test("featured placement requires an active admin role and keeps anonymous public search and user sorting intact", async () => {
   const marker = `Promotion-${randomUUID()}`;
   const first = await published(users.ownerA.client, `${marker} A`);
   const second = await published(users.ownerA.client, `${marker} B`);
@@ -1034,7 +1037,7 @@ test("featured placement requires admin MFA and keeps anonymous public search an
     options,
   );
   ok(await weak.auth.signInWithPassword({ email: users.admin.email, password }));
-  denied(await weak.rpc("set_listing_promotion", args));
+  ok(await weak.rpc("set_listing_promotion", args));
   denied(
     await users.admin.client.from("listing_promotions").insert({
       property_id: first.id,

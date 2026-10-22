@@ -125,7 +125,7 @@ Owner approves/rejects requests from a request detail view. Owner-entered walk-i
 
 ### Admin moderation
 
-Inspect the listing, photos, private address, ownership/contact evidence, and unit/pricing details → approve or return a reason → audit the decision. Suspension immediately removes public visibility and prevents new approvals. Existing reservations remain in the participants' dashboards. Resolve reports through recorded actions rather than deleting records. Require MFA for admin accounts before production access.
+Inspect the listing, photos, private address, ownership/contact evidence, and unit/pricing details → approve or return a reason → audit the decision. Suspension immediately removes public visibility and prevents new approvals. Existing reservations remain in the participants' dashboards. Resolve reports through recorded actions rather than deleting records. Require password sign-in, an active account, and a database-assigned role for admin access.
 
 ## 6. UI/UX direction
 

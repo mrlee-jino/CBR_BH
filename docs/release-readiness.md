@@ -19,7 +19,7 @@
 1. Run the corrected full suite in GitHub's isolated Supabase environment; do not run synthetic publication/booking fixtures against hosted data.
 2. The owner confirmed the active domain is `https://boardinghousesapartmentsofcbr.vercel.app`. It responds, but signup lacks the new account-type choice and `/admin/login` returns 404, showing the latest app is not yet deployed there. The previous configured origin `https://cabadbaranboardinghouses.vercel.app` returned `DEPLOYMENT_NOT_FOUND`. Set Vercel `NEXT_PUBLIC_SITE_URL` and Supabase Auth Site URL to the active origin; allow `https://boardinghousesapartmentsofcbr.vercel.app/auth/confirm` as a redirect URL. Redeploy the latest validated application after those settings are saved.
 3. Verify the hosted Supabase Auth password minimum is 8. Local `config.toml` does not change the hosted Auth configuration.
-4. On the active deployment, sign in as the assigned administrator and verify MFA. Test owner/renter account journeys with authorized test accounts, and verify the deployed commit.
-5. Upload actual Sunrise property photos, review the full listing and photos through the MFA-protected admin workspace, then approve publication. Do not substitute generated/demo artwork for property photos.
+4. On the active deployment, sign in as the assigned administrator and confirm role-based access. Test owner/renter account journeys with authorized test accounts, and verify the deployed commit.
+5. Upload actual Sunrise property photos, review the full listing and photos through the role-protected admin workspace, then approve publication. Do not substitute generated/demo artwork for property photos.
 
 No real booking, property publication, photo approval, or promotion was created as part of the read-only hosted audit. Application validation remains separate from the operator's production publication decision.

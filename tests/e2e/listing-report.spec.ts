@@ -3,7 +3,6 @@ import AxeBuilder from "@axe-core/playwright";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
 import pg from "pg";
-import { currentTotp } from "../helpers/totp.mjs";
 import { confirmAction } from "../helpers/confirm-action";
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 if (url !== "http://127.0.0.1:54321")
@@ -120,15 +119,7 @@ test("a signed-in renter reports a published property privately and an admin rev
     await db.query("update public.properties set status='published' where id=$1", [property]);
     await moderatorPage.goto("/admin/login");
     await credentials(moderatorPage, admin.email, password);
-    await expect(moderatorPage).toHaveURL(/\/dashboard\/security$/);
-    await moderatorPage.getByRole("button", { name: "Set up an authenticator" }).click();
-    await moderatorPage.getByText("Enter the setup key manually").click();
-    const secret = await moderatorPage.locator(".mfa-setup code").innerText();
-    await moderatorPage.getByLabel("Authenticator code").fill(currentTotp(secret));
-    await moderatorPage.getByRole("button", { name: "Verify authenticator", exact: true }).click();
-    await expect(
-      moderatorPage.getByRole("status").filter({ hasText: "verification is complete" }),
-    ).toBeVisible();
+    await expect(moderatorPage).toHaveURL(/\/admin$/);
     await moderatorPage.goto(`/admin/reports?q=${report.id}`);
     const card = moderatorPage.getByRole("article", {
       name: "Report: Incorrect listing information",

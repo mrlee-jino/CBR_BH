@@ -5,7 +5,6 @@ import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import pg from "pg";
 import sharp from "sharp";
-import { currentTotp } from "../helpers/totp.mjs";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 if (url !== "http://127.0.0.1:54321")
@@ -198,15 +197,7 @@ test("owner creates a property and room, admin reviews it, and renters see only 
     await expect(page.getByRole("button", { name: "Save property", exact: true })).toHaveCount(0);
     await confirmAction(page, "Sign out");
     await signIn(page, adminEmail, password, "/admin");
-    await expect(page).toHaveURL(/\/dashboard\/security$/);
-    await page.getByRole("button", { name: "Set up an authenticator" }).click();
-    await page.getByText("Enter the setup key manually").click();
-    const secret = await page.locator(".mfa-setup code").innerText();
-    await page.getByLabel("Authenticator code").fill(currentTotp(secret));
-    await page.getByRole("button", { name: "Verify authenticator", exact: true }).click();
-    await expect(
-      page.getByRole("status").filter({ hasText: "verification is complete" }),
-    ).toBeVisible();
+    await expect(page).toHaveURL(/\/admin$/);
     await page.goto(`/admin/properties/${id}`);
     await expect(page.getByText("Private address 123", { exact: true })).toBeVisible();
     await page

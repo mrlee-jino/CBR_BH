@@ -40,7 +40,7 @@ export default async function Admin({
   );
   return (
     <DashboardShell title="Platform administration." workspace="admin">
-      <span className="eyebrow">ADMIN ROLE · MFA VERIFIED</span>
+      <span className="eyebrow">AUTHORIZED ADMINISTRATOR</span>
       <p className="page-lead">
         Manage users, reports, listing reviews, property photos and featured placements.
       </p>

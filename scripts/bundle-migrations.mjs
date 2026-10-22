@@ -66,3 +66,10 @@ writeFileSync(
   "supabase/upgrade-reporting.sql",
   `-- Existing Cabahay projects: run once before enabling renter reports.\nbegin;\n${reporting}\ncommit;\n`,
 );
+
+const adminPassword = parts.find((part) => part.includes("_admin_password_access.sql"));
+if (!adminPassword) throw new Error("Admin password access migration is missing.");
+writeFileSync(
+  "supabase/upgrade-admin-password.sql",
+  `-- Existing Cabahay projects: run once to remove the admin authenticator requirement.\nbegin;\n${adminPassword}\ncommit;\n`,
+);

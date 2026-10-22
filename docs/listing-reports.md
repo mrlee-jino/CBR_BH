@@ -1,6 +1,6 @@
 # Listing reports and publication approval
 
-The existing publication workflow remains: owners submit draft properties for review; assigned, MFA-verified administrators review property details, rooms, photos and contact information at `/admin/properties/[id]`, then publish or reject the listing. Administrators can suspend a published listing. Public discovery reads only eligible published properties, and edits can require another review. This is a manual platform review, not government business accreditation.
+The existing publication workflow remains: owners submit draft properties for review; assigned, active administrators review property details, rooms, photos and contact information at `/admin/properties/[id]`, then publish or reject the listing. Administrators can suspend a published listing. Public discovery reads only eligible published properties, and edits can require another review. This is a manual platform review, not government business accreditation.
 
 ## Activate renter reporting
 
@@ -11,11 +11,11 @@ No new application secrets are needed. Without the upgrade, the form fails safel
 ## Workflow
 
 1. From a published property, select **Report this listing**. Guests sign in and return to that form.
-2. Choose a reason and optionally provide up to 2,000 characters of details. An active account is required; admin MFA is only needed for the administrator’s review.
+2. Choose a reason and optionally provide up to 2,000 characters of details. An active account is required; administrators use their assigned role to review it.
 3. The form shows a submission receipt with a report reference. On revisiting, an existing open report is shown instead of another form.
 4. Administrators see the submitted report in `/admin/reports`, with the reporter, listing, reason and details. They investigate and resolve/dismiss the report, or separately moderate the listing/account.
 
-Reports are private to the reporter and MFA-verified administrators. They do not automatically unpublish a listing, cancel bookings, share a phone number, or notify the owner. Attachments, reporter follow-up messages and email notifications are not included.
+Reports are private to the reporter and active administrators. They do not automatically unpublish a listing, cancel bookings, share a phone number, or notify the owner. Attachments, reporter follow-up messages and email notifications are not included.
 
 ## Submission protections
 
