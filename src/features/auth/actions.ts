@@ -107,7 +107,8 @@ export async function login(previous: AuthState, form: FormData): Promise<AuthSt
     }
     if (destination === "/dashboard") {
       const roles = await supabase.from("account_roles").select("role").eq("user_id", user.id);
-      if (roles.data?.some((r) => r.role === "owner")) destination = "/owner";
+      if (roles.data?.some((r) => r.role === "admin")) destination = "/admin";
+      else if (roles.data?.some((r) => r.role === "owner")) destination = "/owner";
       else if (user.user_metadata.signup_intent === "owner") destination = "/become-an-owner";
     }
   } catch {

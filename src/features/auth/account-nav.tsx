@@ -17,7 +17,9 @@ export function AccountNav({
   return (
     <nav className="account-nav" aria-label="Account navigation">
       {adminView ? (
-        <Link href="/admin">Administration</Link>
+        <Link href="/admin" aria-current={path === "/admin" ? "page" : undefined}>
+          Admin dashboard
+        </Link>
       ) : ownerView ? (
         <>
           <Link href="/owner">My properties</Link>
@@ -30,12 +32,22 @@ export function AccountNav({
           <Link href="/dashboard/requests">My requests</Link>
         </>
       )}
-      <Link href="/dashboard/settings">Profile</Link>
-      <Link href="/dashboard/security">Security</Link>
+      <Link
+        href="/dashboard/settings"
+        aria-current={path === "/dashboard/settings" ? "page" : undefined}
+      >
+        {adminView ? "Admin profile" : "Profile"}
+      </Link>
+      <Link
+        href="/dashboard/security"
+        aria-current={path === "/dashboard/security" ? "page" : undefined}
+      >
+        Security
+      </Link>
       {owner && !ownerView && <Link href="/owner">Owner workspace</Link>}
       {ownerView && <Link href="/dashboard">Renter workspace</Link>}
       {admin && !adminView && <Link href="/admin">Administration</Link>}
-      {adminView && <Link href="/dashboard">My account</Link>}
+      {adminView && <Link href="/properties">Browse rentals</Link>}
     </nav>
   );
 }

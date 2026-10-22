@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import Link from "@/components/ui/navigation-link";
 import { requireAccount } from "@/features/auth/account";
 import { DashboardShell } from "@/features/auth/dashboard-shell";
@@ -6,6 +7,12 @@ import { DashboardShell } from "@/features/auth/dashboard-shell";
 export const metadata: Metadata = { title: "Your account" };
 export default async function Dashboard() {
   const account = await requireAccount();
+  if (
+    !account.setupRequired &&
+    account.profile?.account_status === "active" &&
+    account.roles.includes("admin")
+  )
+    redirect("/admin");
   return (
     <DashboardShell title={`Welcome, ${account.profile?.display_name ?? "neighbor"}.`}>
       {account.setupRequired ? (

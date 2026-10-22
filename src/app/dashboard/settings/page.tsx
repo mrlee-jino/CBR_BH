@@ -8,6 +8,7 @@ import Link from "@/components/ui/navigation-link";
 export const metadata: Metadata = { title: "Profile settings" };
 export default async function Settings() {
   const account = await requireAccount("/dashboard/settings");
+  const admin = account.roles.includes("admin");
   const supabase = await createClient();
   const { data } = await supabase
     .from("profile_contacts")
@@ -15,12 +16,16 @@ export default async function Settings() {
     .eq("user_id", account.user.id)
     .maybeSingle();
   return (
-    <DashboardShell title="Your everyday details.">
+    <DashboardShell
+      title={admin ? "Administrator profile." : "Your everyday details."}
+      workspace={admin ? "admin" : undefined}
+    >
       <div className="account-card">
         <h2>Private profile</h2>
         <p className="auth-description">
-          Your phone number stays private until you consent to share it with an owner when sending a
-          request.
+          {admin
+            ? "Manage your personal administrator account details. Your phone number is private."
+            : "Your phone number stays private until you consent to share it with an owner when sending a request."}
         </p>
         {account.setupRequired || account.profile?.account_status !== "active" ? (
           <p className="form-message">
@@ -31,7 +36,7 @@ export default async function Settings() {
           <ProfileForm name={account.profile.display_name} phone={data?.phone ?? ""} />
         )}
       </div>
-      {!account.roles.includes("owner") && (
+      {!admin && !account.roles.includes("owner") && (
         <details className="account-card">
           <summary>Have a property to rent out?</summary>
           <p>You can add property owner access without creating another account.</p>

@@ -15,3 +15,5 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium node scripts/with-local-en
 ```
 
 Restore local confirmation before running the normal email-verification suite. Never run test signups against the hosted project.
+
+Assigned administrators land in `/admin` after a normal login or opening `/dashboard`. MFA verification is required first. Admin profile and security pages keep the administration navigation; explicit allowed return links are preserved. The admin dashboard displays listing totals and review queues.

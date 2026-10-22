@@ -38,7 +38,8 @@ export async function GET(request: NextRequest) {
           failed = true;
         } else if (next === "/dashboard") {
           const roles = await supabase.from("account_roles").select("role").eq("user_id", user.id);
-          if (roles.data?.some((role) => role.role === "owner")) next = "/owner";
+          if (roles.data?.some((role) => role.role === "admin")) next = "/admin";
+          else if (roles.data?.some((role) => role.role === "owner")) next = "/owner";
           else if (user.user_metadata.signup_intent === "owner") next = "/become-an-owner";
         }
       }

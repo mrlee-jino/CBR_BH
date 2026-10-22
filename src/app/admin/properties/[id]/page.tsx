@@ -45,7 +45,7 @@ export default async function Review({ params }: { params: Promise<{ id: string 
       )
     : "";
   return (
-    <DashboardShell title={property.title}>
+    <DashboardShell title={property.title} workspace="admin">
       {(property.status === "published" || promotion.data) && (
         <section className="account-card">
           <h2>Featured placement</h2>

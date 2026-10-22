@@ -197,6 +197,7 @@ test("token-hash confirmation is single-use and ignores off-site redirects", asy
 test("assigned admin must enroll and verify an authenticator before protected access", async ({
   page,
 }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   const email = `puyo-mfa-${randomUUID()}@example.test`;
   const { data, error } = await service.auth.admin.createUser({
     email,
@@ -207,17 +208,25 @@ test("assigned admin must enroll and verify an authenticator before protected ac
   const connection = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL });
   await connection.connect();
   try {
-    await connection.query("insert into public.account_roles(user_id,role) values($1,'admin')", [
-      data.user!.id,
-    ]);
+    await connection.query(
+      "insert into public.account_roles(user_id,role) values($1,'admin'),($1,'owner')",
+      [data.user!.id],
+    );
   } finally {
     await connection.end();
   }
-  await page.goto("/login?next=/admin");
+  await page.goto("/login");
   await page.getByLabel("Email address").fill(email);
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/dashboard\/security$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Administrator security.");
+  const adminNav = page.getByRole("navigation", { name: "Account navigation" });
+  await expect(adminNav.getByRole("link", { name: "Admin dashboard", exact: true })).toBeVisible();
+  await expect(adminNav.getByRole("link", { name: "My requests", exact: true })).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: "Continue to administration", exact: true }),
+  ).toHaveCount(0);
   await page.getByRole("button", { name: "Set up an authenticator" }).click();
   await page.getByText("Enter the setup key manually").click();
   const secret = await page.locator(".mfa-setup code").innerText();
@@ -226,8 +235,56 @@ test("assigned admin must enroll and verify an authenticator before protected ac
   await expect(
     page.getByRole("status").filter({ hasText: "verification is complete" }),
   ).toBeVisible();
-  await page.goto("/admin");
+  await page.getByRole("link", { name: "Continue to administration", exact: true }).click();
+  await expect(page).toHaveURL(/\/admin$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Platform administration.");
+  await expect(page.getByLabel("Listing totals")).toBeVisible();
+  expect(
+    (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze())
+      .violations,
+  ).toEqual([]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await page.goto("/dashboard");
+  await expect(page).toHaveURL(/\/admin$/);
+  await adminNav.getByRole("link", { name: "Admin profile", exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Administrator profile.");
+  await expect(adminNav.getByRole("link", { name: "My requests", exact: true })).toHaveCount(0);
+  await expect(page.getByText("Have a property to rent out?")).toHaveCount(0);
+  await confirmAction(page, "Sign out");
+  await expect(page).toHaveURL(/\/login$/);
+  await page.goto("/login?next=/dashboard/settings");
+  await page.getByLabel("Email address").fill(email);
+  await page.getByLabel("Password", { exact: true }).fill(password);
+  const signInResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" && new URL(response.url()).pathname === "/login",
+  );
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await (await signInResponse).finished();
+  await expect(page).toHaveURL(/\/dashboard\/settings$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Administrator profile.");
+  await page.goto("/admin");
+  await expect(page).toHaveURL(/\/dashboard\/security$/);
+  // A suspended administrator must reach the suspension message without a redirect loop.
+  const db = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL });
+  await db.connect();
+  try {
+    await db.query("update public.profiles set account_status='suspended' where id=$1", [
+      data.user!.id,
+    ]);
+    await page.goto("/admin");
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page.getByRole("main").getByRole("alert")).toContainText(
+      "Your account is suspended",
+    );
+  } finally {
+    await db.query("update public.profiles set account_status='active' where id=$1", [
+      data.user!.id,
+    ]);
+    await db.end();
+  }
 });
 
 test("an unverified account can request and use a fresh confirmation email", async ({ page }) => {
