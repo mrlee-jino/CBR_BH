@@ -92,6 +92,11 @@ export default async function Property({ params }: { params: Promise<{ slug: str
           <Link href={`/properties/${p.slug}/request?kind=viewing`} className="button">
             Request a viewing
           </Link>
+          <p>
+            <Link className="text-link" href={`/properties/${p.slug}/report`}>
+              Report this listing
+            </Link>
+          </p>
         </aside>
       </div>
     </div>

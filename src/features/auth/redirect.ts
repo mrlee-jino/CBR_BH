@@ -12,6 +12,8 @@ export function safeNext(value: unknown) {
   const basic =
     /^\/(dashboard(?:\/(?:settings|security|requests))?|owner(?:\/requests)?|admin(?:\/(?:users|reports))?|become-an-owner|reset-password)$/;
   if (basic.test(url.pathname) && !url.search) return url.pathname;
+  if (/^\/properties\/[a-z0-9]+(?:-[a-z0-9]+)*\/report$/.test(url.pathname) && !url.search)
+    return url.pathname;
   const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const keys = [...url.searchParams.keys()];
   if (new Set(keys).size !== keys.length) return "/dashboard";

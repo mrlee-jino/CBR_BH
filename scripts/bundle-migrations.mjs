@@ -59,3 +59,10 @@ writeFileSync(
   "supabase/upgrade-admin.sql",
   `-- Apply to existing Cabahay projects once before enabling user management.\nbegin;\n${admin}\ncommit;\n`,
 );
+
+const reporting = parts.find((part) => part.includes("_listing_reports.sql"));
+if (!reporting) throw new Error("Listing report migration is missing.");
+writeFileSync(
+  "supabase/upgrade-reporting.sql",
+  `-- Existing Cabahay projects: run once before enabling renter reports.\nbegin;\n${reporting}\ncommit;\n`,
+);

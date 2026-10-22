@@ -23,7 +23,7 @@ The account-change action deliberately uses the new entry point: without this up
 - Resolve an addressed issue or dismiss a report when no action is needed. A confirmation is required. Conditional database updates prevent an already closed report from being resolved again by a stale form.
 - Closed reports retain the deciding administrator and decision time; audit events record the decision. Closing a report does not automatically suspend a listing or user. Reopening and administrator decision notes are not implemented.
 
-Reports use the existing `submit_report` workflow. A renter-facing “Report listing” form is a separate next step.
+Published property pages offer a signed-in “Report this listing” form. See [renter reporting setup](listing-reports.md) for its database upgrade and submission protections.
 
 Times are displayed in Philippine time. Report text and account names are rendered as plain text. Search wildcards are escaped and return destinations are constructed from bounded filters.
 

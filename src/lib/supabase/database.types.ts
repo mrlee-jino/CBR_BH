@@ -1004,6 +1004,10 @@ export type Database = {
         };
         Returns: string;
       };
+      submit_listing_report: {
+        Args: { p_detail?: string; p_property_id: string; p_reason: string };
+        Returns: string;
+      };
       submit_property: { Args: { p_property_id: string }; Returns: undefined };
       submit_report: {
         Args: { p_detail?: string; p_property_id: string; p_reason: string };

@@ -1000,13 +1000,13 @@ test("SQL Editor bundle bootstraps a fresh app schema and records migration vers
   await db.query("begin");
   try {
     await db.query(
-      "drop policy if exists puyohub_photos_closed on storage.objects; drop schema public cascade; drop schema private cascade; create schema public; grant usage on schema public to anon,authenticated,service_role; delete from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319','20261017154740','20261022163000','20261023000100')",
+      "drop policy if exists puyohub_photos_closed on storage.objects; drop schema public cascade; drop schema private cascade; create schema public; grant usage on schema public to anon,authenticated,service_role; delete from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319','20261017154740','20261022163000','20261023000100','20261023000200')",
     );
     await db.query(sql);
     const result = await db.query(
-      "select count(*)::int as count from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319','20261017154740','20261022163000','20261023000100')",
+      "select count(*)::int as count from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319','20261017154740','20261022163000','20261023000100','20261023000200')",
     );
-    assert.equal(result.rows[0].count, 9);
+    assert.equal(result.rows[0].count, 10);
     const profiles = await db.query("select count(*)::int as count from public.profiles");
     assert.ok(profiles.rows[0].count >= 6, "Existing Auth accounts should be backfilled safely");
   } finally {
@@ -1170,5 +1170,87 @@ test("Google profile names use provider text without granting roles", async () =
   assert.deepEqual(
     roles.map((row) => row.role),
     ["renter"],
+  );
+});
+
+test("renter reports enforce publication, privacy, atomic duplicate prevention and rolling limits", async () => {
+  const email = `cabahay-report-${randomUUID()}@example.test`;
+  const actor = ok(await root.auth.admin.createUser({ email, password, email_confirm: true })).user;
+  const client = createClient(
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    options,
+  );
+  ok(await client.auth.signInWithPassword({ email, password }));
+  const targets = [];
+  for (let i = 0; i < 6; i++)
+    targets.push(await published(users.ownerA.client, `Reporting safeguard ${i}`));
+  const input = (id) => ({
+    p_property_id: id,
+    p_reason: "Suspected scam",
+    p_detail: "Local report test details",
+  });
+  denied(await anon.rpc("submit_listing_report", input(targets[0].id)));
+  denied(await client.rpc("submit_listing_report", { ...input(targets[0].id), p_reason: "  " }));
+  denied(
+    await client.rpc("submit_listing_report", {
+      ...input(targets[0].id),
+      p_detail: "x".repeat(2001),
+    }),
+  );
+  const parallel = await Promise.all([
+    client.rpc("submit_listing_report", input(targets[0].id)),
+    client.rpc("submit_report", input(targets[0].id)),
+  ]);
+  assert.equal(parallel.filter((result) => !result.error).length, 1);
+  assert.match(parallel.find((result) => result.error).error.message, /REPORT_ALREADY_OPEN/);
+  const report = parallel.find((result) => !result.error).data;
+  assert.equal(
+    ok(await users.ownerA.client.from("reports").select("id").eq("id", report)).length,
+    0,
+  );
+  assert.equal(
+    ok(await users.renterB.client.from("reports").select("id").eq("id", report)).length,
+    0,
+  );
+  assert.equal(ok(await client.from("reports").select("id").eq("id", report)).length, 1);
+  await db.query("update public.profiles set account_status='suspended' where id=$1", [actor.id]);
+  try {
+    denied(await client.rpc("submit_listing_report", input(targets[1].id)));
+  } finally {
+    await db.query("update public.profiles set account_status='active' where id=$1", [actor.id]);
+  }
+  await db.query("update public.properties set status='paused' where id=$1", [targets[5].id]);
+  denied(await client.rpc("submit_listing_report", input(targets[5].id)));
+  await db.query("update public.properties set status='published' where id=$1", [targets[5].id]);
+  for (let i = 1; i < 4; i++) ok(await client.rpc("submit_listing_report", input(targets[i].id)));
+  const capped = await Promise.all([
+    client.rpc("submit_listing_report", input(targets[4].id)),
+    client.rpc("submit_listing_report", input(targets[5].id)),
+  ]);
+  assert.equal(capped.filter((result) => !result.error).length, 1);
+  assert.match(capped.find((result) => result.error).error.message, /REPORT_RATE_LIMIT/);
+  const retry = capped[0].error ? targets[4].id : targets[5].id;
+  ok(await users.admin.client.rpc("resolve_report", { p_report_id: report, p_status: "resolved" }));
+  assert.match(
+    (await client.rpc("submit_listing_report", input(retry))).error.message,
+    /REPORT_RATE_LIMIT/,
+  );
+  assert.equal(
+    (
+      await db.query("select count(*)::int as count from public.reports where reporter_id=$1", [
+        actor.id,
+      ])
+    ).rows[0].count,
+    5,
+  );
+  await db.query(
+    "update public.reports set created_at=now()-interval '25 hours' where reporter_id=$1",
+    [actor.id],
+  );
+  ok(await client.rpc("submit_listing_report", input(retry)));
+  assert.match(
+    (await client.rpc("submit_listing_report", input(targets[1].id))).error.message,
+    /REPORT_ALREADY_OPEN/,
   );
 });

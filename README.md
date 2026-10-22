@@ -74,3 +74,5 @@ Secure photos require the incremental [photo upgrade and server-only key setup](
 Email/password registration setup: [Cabahay account signup](docs/email-signup.md).
 
 Admin Users and Reports: [setup and controls](docs/admin-management.md). Apply `supabase/upgrade-admin.sql` once before enabling account changes.
+
+Renter listing reports: [setup and workflow](docs/listing-reports.md). Apply `supabase/upgrade-reporting.sql` once before enabling submissions.
