@@ -4,7 +4,7 @@ import { z } from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { siteOrigin, supabaseConfig } from "@/lib/supabase/config";
+import { siteOrigin } from "@/lib/supabase/config";
 import { requireAccount } from "./account";
 import { safeNext } from "./redirect";
 
@@ -70,46 +70,6 @@ export async function signup(previous: AuthState, form: FormData): Promise<AuthS
   }
   revalidatePath("/dashboard", "layout");
   redirect(data.data.account_type === "owner" ? "/become-an-owner" : "/dashboard");
-}
-
-export async function continueWithGoogle(previous: AuthState, form: FormData): Promise<AuthState> {
-  void previous;
-  const signingUp = form.get("mode") === "signup";
-  const intent = form.get("account_type");
-  if (signingUp && (form.get("terms") !== "on" || (intent !== "renter" && intent !== "owner")))
-    return {
-      message:
-        "Choose Renter or Property owner and accept the account notice before continuing with Google.",
-    };
-  let url: string | undefined;
-  try {
-    const supabase = await createClient();
-    const config = supabaseConfig();
-    const settingsResponse = await fetch(`${config.url}/auth/v1/settings`, {
-      headers: { apikey: config.key },
-      cache: "no-store",
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!settingsResponse.ok || !(await settingsResponse.json()).external?.google)
-      return {
-        message: "Google sign-in is not available yet. Please use email or try again later.",
-      };
-    const next = signingUp && intent === "owner" ? "/become-an-owner" : safeNext(form.get("next"));
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${siteOrigin()}/auth/confirm?next=${encodeURIComponent(next)}`,
-        queryParams: { prompt: "select_account" },
-        skipBrowserRedirect: true,
-      },
-    });
-    if (error || !data.url)
-      return { message: "Google sign-in is unavailable. Try again or use your email." };
-    url = data.url;
-  } catch {
-    return unavailable;
-  }
-  redirect(url);
 }
 
 export async function login(previous: AuthState, form: FormData): Promise<AuthState> {

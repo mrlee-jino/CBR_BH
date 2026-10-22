@@ -71,4 +71,4 @@ Owner listing creation, rooms, admin review, and live public discovery: see [lis
 
 Secure photos require the incremental [photo upgrade and server-only key setup](docs/secure-photos.md).
 
-Google login and registration setup: [Cabahay Google sign-in](docs/google-sign-in.md).
+Email/password registration setup: [Cabahay account signup](docs/email-signup.md).

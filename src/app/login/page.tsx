@@ -6,7 +6,7 @@ import { safeNext } from "@/features/auth/redirect";
 
 export const metadata: Metadata = { title: "Sign in" };
 const messages: Record<string, string> = {
-  "google-cancelled": "Google sign-in was not completed. Try again or sign in with email.",
+  "sign-in-failed": "Sign-in was not completed. Please sign in with your email and password.",
   "confirm-email": "Confirm your email before signing in.",
   "email-confirmed": "Email confirmed. You can now sign in.",
   "password-updated": "Password updated. Sign in with your new password.",

@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     new URL(
       failed
         ? params.has("error")
-          ? "/login?message=google-cancelled"
+          ? "/login?message=sign-in-failed"
           : "/login?message=invalid-link"
         : next,
       origin,

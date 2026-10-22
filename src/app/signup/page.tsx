@@ -8,7 +8,7 @@ export default function SignupPage() {
   return (
     <AuthShell
       title="Make yourself at home."
-      description="Create your account with Google or email to get started."
+      description="Create your account with your email and password to get started."
       footer={
         <p>
           Already have an account? <Link href="/login">Sign in</Link>
