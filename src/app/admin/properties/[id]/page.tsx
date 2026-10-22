@@ -69,6 +69,11 @@ export default async function Review({ params }: { params: Promise<{ id: string 
         <p className="preserve-lines">{property.description}</p>
         <p>Public web address: /properties/{property.slug}</p>
         <h3>Private contact details</h3>
+        <p>
+          <Link className="text-link" href={`/admin/users?q=${property.owner_id}`}>
+            Manage owner account →
+          </Link>
+        </p>
         <p>{d.data?.street_address}</p>
         <p>
           {d.data?.contact_name} · {d.data?.contact_phone}

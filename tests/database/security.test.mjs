@@ -450,6 +450,46 @@ test("suspension immediately blocks mutations and removes public owner listings 
       p_reason: "Local test suspension",
     }),
   );
+  const suspensionAudit = await db.query(
+    "select metadata->>'reason' as reason from public.audit_events where entity_id=$1 and action='account.suspended' order by occurred_at desc limit 1",
+    [users.ownerB.id],
+  );
+  assert.equal(suspensionAudit.rows[0].reason, "Local test suspension");
+  denied(
+    await users.admin.client.rpc("admin_set_account_status", {
+      p_user_id: users.ownerB.id,
+      p_suspended: true,
+      p_reason: "Duplicate suspension",
+    }),
+  );
+  denied(
+    await users.admin.client.rpc("admin_set_account_status", {
+      p_user_id: users.admin.id,
+      p_suspended: true,
+      p_reason: "Cannot suspend self",
+    }),
+  );
+  denied(
+    await users.admin.client.rpc("admin_set_account_status", {
+      p_user_id: randomUUID(),
+      p_suspended: true,
+      p_reason: "Missing account",
+    }),
+  );
+  denied(
+    await users.admin.client.rpc("admin_set_account_status", {
+      p_user_id: users.ownerB.id,
+      p_suspended: null,
+      p_reason: "Missing status",
+    }),
+  );
+  denied(
+    await users.renterA.client.rpc("admin_set_account_status", {
+      p_user_id: users.ownerB.id,
+      p_suspended: false,
+      p_reason: "Unauthorized restore",
+    }),
+  );
   denied(await users.ownerB.client.rpc("activate_owner"));
   assert.ok(!ok(await anon.rpc("browse_properties")).some((row) => row.id === target.id));
   denied(await request(users.renterB.client, target.unit));
@@ -460,6 +500,12 @@ test("suspension immediately blocks mutations and removes public owner listings 
       p_reason: "Local test restore",
     }),
   );
+  const restoreAudit = await db.query(
+    "select metadata->>'reason' as reason,actor_id from public.audit_events where entity_id=$1 and action='account.restored' order by occurred_at desc limit 1",
+    [users.ownerB.id],
+  );
+  assert.equal(restoreAudit.rows[0].reason, "Local test restore");
+  assert.equal(restoreAudit.rows[0].actor_id, users.admin.id);
 });
 test("all application tables have RLS; private helpers and uploads are inaccessible", async () => {
   const tables = await db.query(
@@ -954,13 +1000,13 @@ test("SQL Editor bundle bootstraps a fresh app schema and records migration vers
   await db.query("begin");
   try {
     await db.query(
-      "drop policy if exists puyohub_photos_closed on storage.objects; drop schema public cascade; drop schema private cascade; create schema public; grant usage on schema public to anon,authenticated,service_role; delete from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319','20261017154740','20261022163000')",
+      "drop policy if exists puyohub_photos_closed on storage.objects; drop schema public cascade; drop schema private cascade; create schema public; grant usage on schema public to anon,authenticated,service_role; delete from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319','20261017154740','20261022163000','20261023000100')",
     );
     await db.query(sql);
     const result = await db.query(
-      "select count(*)::int as count from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319','20261017154740','20261022163000')",
+      "select count(*)::int as count from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319','20261017154740','20261022163000','20261023000100')",
     );
-    assert.equal(result.rows[0].count, 8);
+    assert.equal(result.rows[0].count, 9);
     const profiles = await db.query("select count(*)::int as count from public.profiles");
     assert.ok(profiles.rows[0].count >= 6, "Existing Auth accounts should be backfilled safely");
   } finally {

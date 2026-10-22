@@ -29,8 +29,8 @@ export async function requireAccount(next = "/dashboard") {
   return account;
 }
 
-export async function requireRole(role: "owner" | "admin") {
-  const account = await requireAccount(`/${role}`);
+export async function requireRole(role: "owner" | "admin", next = `/${role}`) {
+  const account = await requireAccount(next);
   if (account.setupRequired || account.profile?.account_status !== "active") redirect("/dashboard");
   if (!account.roles.includes(role)) redirect(role === "owner" ? "/become-an-owner" : "/dashboard");
   if (role === "admin") {

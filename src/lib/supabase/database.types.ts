@@ -765,6 +765,10 @@ export type Database = {
     };
     Functions: {
       activate_owner: { Args: Record<PropertyKey, never>; Returns: undefined };
+      admin_set_account_status: {
+        Args: { p_reason: string; p_suspended: boolean; p_user_id: string };
+        Returns: undefined;
+      };
       approve_booking: { Args: { p_request_id: string }; Returns: string };
       browse_properties: {
         Args: { p_limit?: number; p_offset?: number };

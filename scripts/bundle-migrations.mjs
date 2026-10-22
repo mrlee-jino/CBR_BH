@@ -52,3 +52,10 @@ writeFileSync(
   "supabase/upgrade-auth.sql",
   `-- Existing Cabahay projects with the core migrations applied. Run once.\nbegin;\n${auth}\ncommit;\n`,
 );
+
+const admin = parts.find((part) => part.includes("_admin_account_audit.sql"));
+if (!admin) throw new Error("Admin account audit migration is missing.");
+writeFileSync(
+  "supabase/upgrade-admin.sql",
+  `-- Apply to existing Cabahay projects once before enabling user management.\nbegin;\n${admin}\ncommit;\n`,
+);

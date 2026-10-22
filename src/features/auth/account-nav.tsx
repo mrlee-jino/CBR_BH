@@ -17,9 +17,17 @@ export function AccountNav({
   return (
     <nav className="account-nav" aria-label="Account navigation">
       {adminView ? (
-        <Link href="/admin" aria-current={path === "/admin" ? "page" : undefined}>
-          Admin dashboard
-        </Link>
+        <>
+          <Link href="/admin" aria-current={path === "/admin" ? "page" : undefined}>
+            Admin dashboard
+          </Link>
+          <Link href="/admin/users" aria-current={path === "/admin/users" ? "page" : undefined}>
+            Users
+          </Link>
+          <Link href="/admin/reports" aria-current={path === "/admin/reports" ? "page" : undefined}>
+            Reports
+          </Link>
+        </>
       ) : ownerView ? (
         <>
           <Link href="/owner">My properties</Link>

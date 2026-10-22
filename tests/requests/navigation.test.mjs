@@ -7,6 +7,8 @@ test("auth return paths preserve listing requests without accepting outside or u
     "/dashboard/requests",
     "/owner/requests",
     "/admin",
+    "/admin/users",
+    "/admin/reports",
     "/become-an-owner",
     `/properties/sunrise-rooms/request?kind=booking&unit=${unit}`,
     "/properties/sunrise-rooms/request?kind=viewing",

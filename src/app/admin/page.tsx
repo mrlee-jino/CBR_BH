@@ -41,7 +41,9 @@ export default async function Admin({
   return (
     <DashboardShell title="Platform administration." workspace="admin">
       <span className="eyebrow">ADMIN ROLE · MFA VERIFIED</span>
-      <p className="page-lead">Manage listing reviews, property photos and featured placements.</p>
+      <p className="page-lead">
+        Manage users, reports, listing reviews, property photos and featured placements.
+      </p>
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Listing totals">
         {summaries.map((summary) => (
           <section className="info-card" key={summary.value}>

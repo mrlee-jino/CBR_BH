@@ -72,3 +72,5 @@ Owner listing creation, rooms, admin review, and live public discovery: see [lis
 Secure photos require the incremental [photo upgrade and server-only key setup](docs/secure-photos.md).
 
 Email/password registration setup: [Cabahay account signup](docs/email-signup.md).
+
+Admin Users and Reports: [setup and controls](docs/admin-management.md). Apply `supabase/upgrade-admin.sql` once before enabling account changes.
