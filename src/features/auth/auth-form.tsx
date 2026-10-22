@@ -4,7 +4,14 @@ import { ActionButton } from "@/components/ui/action-button";
 import Link from "@/components/ui/navigation-link";
 import { useActionState, useState } from "react";
 import { ArrowRight } from "lucide-react";
-import { forgotPassword, login, resetPassword, signup, resendConfirmation } from "./actions";
+import {
+  forgotPassword,
+  login,
+  resetPassword,
+  signup,
+  resendConfirmation,
+  continueWithGoogle,
+} from "./actions";
 
 type Mode = "signup" | "login" | "forgot" | "reset" | "resend";
 const actions = {
@@ -16,6 +23,7 @@ const actions = {
 };
 export function AuthForm({ mode, next = "/dashboard" }: { mode: Mode; next?: string }) {
   const [state, action, pending] = useActionState(actions[mode], {});
+  const [googleState, googleAction, googlePending] = useActionState(continueWithGoogle, {});
   const [accountType, setAccountType] = useState("");
   const buttons = {
     signup: "Create account",
@@ -27,6 +35,39 @@ export function AuthForm({ mode, next = "/dashboard" }: { mode: Mode; next?: str
   return (
     <form action={action} className="auth-form">
       <input type="hidden" name="next" value={next} />
+      <input type="hidden" name="mode" value={mode} />
+      {(mode === "signup" || mode === "login") && (
+        <>
+          <ActionButton
+            type="submit"
+            formAction={googleAction}
+            formNoValidate
+            className="button button-outline"
+            pending={googlePending}
+            disabled={pending}
+          >
+            Continue with Google
+          </ActionButton>
+          {mode === "signup" && (
+            <p className="field-help">
+              Choose your account type and accept the account notice below, then continue with
+              Google. No password is needed.
+            </p>
+          )}
+          {mode === "login" && (
+            <p className="field-help">
+              By continuing with Google, you agree to our{" "}
+              <Link href="/preview">account notice</Link> and storing your account details.
+            </p>
+          )}
+          {googleState.message && (
+            <p className="form-message" role="alert">
+              {googleState.message}
+            </p>
+          )}
+          <p className="field-help">Or continue with email</p>
+        </>
+      )}
       {mode === "signup" && (
         <fieldset className="account-type-choices">
           <legend>I’m joining as a…</legend>
@@ -60,7 +101,7 @@ export function AuthForm({ mode, next = "/dashboard" }: { mode: Mode; next?: str
           </label>
           {accountType === "owner" && (
             <p className="field-help">
-              After verifying your email, complete the owner responsibilities step to open your
+              After creating your account, complete the owner responsibilities step to open your
               property workspace.
             </p>
           )}

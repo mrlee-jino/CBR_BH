@@ -37,7 +37,7 @@ export function AuthShell({
         </Link>
       </div>
       <div className="auth-card">
-        <span className="eyebrow">WELCOME TO PUYOHUB</span>
+        <span className="eyebrow">WELCOME TO CABAHAY</span>
         <h2>{title}</h2>
         <p className="auth-description">{description}</p>
         {children}

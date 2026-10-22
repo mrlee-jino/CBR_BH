@@ -11,7 +11,7 @@ test("signup offers two clear account choices and admin sign-in is separate", as
   await owner.check();
   await expect(owner).toBeChecked();
   await expect(renter).not.toBeChecked();
-  await expect(page.getByText(/After verifying your email, complete/)).toBeVisible();
+  await expect(page.getByText(/After creating your account, complete/)).toBeVisible();
   await expect(page.getByRole("radio")).toHaveCount(2);
   await page.goto("/admin/login");
   await expect(page.getByRole("heading", { name: "Administrator sign in" })).toBeVisible();

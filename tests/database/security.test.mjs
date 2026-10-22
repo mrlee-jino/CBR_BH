@@ -954,13 +954,13 @@ test("SQL Editor bundle bootstraps a fresh app schema and records migration vers
   await db.query("begin");
   try {
     await db.query(
-      "drop policy if exists puyohub_photos_closed on storage.objects; drop schema public cascade; drop schema private cascade; create schema public; grant usage on schema public to anon,authenticated,service_role; delete from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319','20261017154740')",
+      "drop policy if exists puyohub_photos_closed on storage.objects; drop schema public cascade; drop schema private cascade; create schema public; grant usage on schema public to anon,authenticated,service_role; delete from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319','20261017154740','20261022163000')",
     );
     await db.query(sql);
     const result = await db.query(
-      "select count(*)::int as count from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319','20261017154740')",
+      "select count(*)::int as count from supabase_migrations.schema_migrations where version in ('20261017000100','20261017000200','20261017000300','20261017000400','20261017000500','20261017145319','20261017154740','20261022163000')",
     );
-    assert.equal(result.rows[0].count, 7);
+    assert.equal(result.rows[0].count, 8);
     const profiles = await db.query("select count(*)::int as count from public.profiles");
     assert.ok(profiles.rows[0].count >= 6, "Existing Auth accounts should be backfilled safely");
   } finally {
@@ -1107,4 +1107,22 @@ test("revoking an owner role immediately removes ownership access for an existin
       users.ownerB.id,
     ]);
   }
+});
+
+test("Google profile names use provider text without granting roles", async () => {
+  const user = ok(
+    await root.auth.admin.createUser({
+      email: `cabahay-google-${randomUUID()}@example.test`,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: "  Google Neighbor  ", role: "admin", signup_intent: "owner" },
+    }),
+  ).user;
+  const profile = ok(await root.from("profiles").select("display_name").eq("id", user.id).single());
+  assert.equal(profile.display_name, "Google Neighbor");
+  const roles = ok(await root.from("account_roles").select("role").eq("user_id", user.id));
+  assert.deepEqual(
+    roles.map((row) => row.role),
+    ["renter"],
+  );
 });

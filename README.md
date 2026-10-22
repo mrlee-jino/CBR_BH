@@ -70,3 +70,5 @@ Next: apply the incremental request upgrade after the listing/photo upgrades, ru
 Owner listing creation, rooms, admin review, and live public discovery: see [listing workspace setup and upgrade](docs/listing-workspaces.md). Existing Supabase projects must run `supabase/upgrade-listings.sql` once before deploying this milestone.
 
 Secure photos require the incremental [photo upgrade and server-only key setup](docs/secure-photos.md).
+
+Google login and registration setup: [Cabahay Google sign-in](docs/google-sign-in.md).

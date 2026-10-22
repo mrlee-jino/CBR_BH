@@ -45,3 +45,10 @@ writeFileSync(
   "supabase/upgrade-experience.sql",
   `-- Apply after the core, listing, photo, and request upgrades. Run once.\nbegin;\n${experience}\ncommit;\n`,
 );
+
+const auth = parts.find((part) => part.includes("_google_profile_names.sql"));
+if (!auth) throw new Error("Google profile migration is missing.");
+writeFileSync(
+  "supabase/upgrade-auth.sql",
+  `-- Existing Cabahay projects with the core migrations applied. Run once.\nbegin;\n${auth}\ncommit;\n`,
+);

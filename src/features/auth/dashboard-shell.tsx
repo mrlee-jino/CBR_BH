@@ -17,7 +17,7 @@ export async function DashboardShell({
     <section className="container account-page">
       <div className="account-heading">
         <div>
-          <span className="eyebrow">YOUR PUYOHUB ACCOUNT</span>
+          <span className="eyebrow">YOUR CABAHAY ACCOUNT</span>
           <h1>{title}</h1>
         </div>
         <form action={signout}>
