@@ -5,9 +5,9 @@ import { PageTransition } from "@/components/ui/page-transition";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "PuyoHub — Find your space in Cabadbaran", template: "%s | PuyoHub" },
+  title: { default: "Cabahay — Find your space in Cabadbaran", template: "%s | Cabahay" },
   description:
-    "Find monthly bedspaces, private rooms, and apartments in Cabadbaran City. Property listings reviewed by PuyoHub admins.",
+    "A place to stay. The freedom to belong. Find monthly bedspaces, private rooms, and apartments in Cabadbaran City.",
   robots: { index: false, follow: false },
 };
 

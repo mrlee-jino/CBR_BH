@@ -116,8 +116,9 @@ export default async function Properties({
             )}
           </nav>
           <p className="field-help">
-            An advertised unit is not a confirmed vacancy. Date checks and booking requests will be
-            added next.
+            An advertised unit is not a confirmed vacancy. Owners record walk-in occupancy and
+            maintenance blocks to prevent overlapping booking approvals; send a request to confirm
+            dates with the owner.
           </p>
         </section>
       </div>

@@ -19,6 +19,11 @@ async function signIn(page: Page, email: string, password: string, next = "/owne
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
 }
+function dateIn(days: number) {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
 test("owner creates a property and room, admin reviews it, and renters see only the published offer", async ({
   page,
   browser,
@@ -90,6 +95,48 @@ test("owner creates a property and room, admin reviews it, and renters see only 
       .fill("Water included; electricity billed separately.");
     await page.getByRole("button", { name: "Add room or bedspace", exact: true }).click();
     await expect(page.getByText(/Room A · Bed 1 · ₱2,500/)).toBeVisible();
+    await page
+      .getByLabel("Room or bedspace", { exact: true })
+      .selectOption({ label: "Room A · Bed 1" });
+    await page.getByLabel("Availability record", { exact: true }).selectOption("manual_occupancy");
+    const occupancyStart = dateIn(30);
+    const occupancyEnd = dateIn(35);
+    await page.getByLabel("Start date (Philippine date)").fill(occupancyStart);
+    await page.getByLabel("Private note (optional)").fill("Test walk-in occupancy");
+    await page.getByRole("button", { name: "Save availability", exact: true }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "Walk-in occupancy saved" }),
+    ).toBeVisible();
+    const occupancy = page
+      .locator("article.account-card")
+      .filter({ hasText: "Test walk-in occupancy" });
+    await expect(occupancy).toContainText("no end date");
+    await occupancy.getByLabel("Set end date (exclusive)").fill(occupancyEnd);
+    await occupancy.getByRole("button", { name: "Save end date", exact: true }).click();
+    await expect(occupancy.getByRole("status")).toContainText("Availability end date saved");
+    await expect(occupancy).toContainText(`${occupancyStart} to ${occupancyEnd}`);
+
+    await page
+      .getByLabel("Room or bedspace", { exact: true })
+      .selectOption({ label: "Room A · Bed 1" });
+    await page.getByLabel("Availability record", { exact: true }).selectOption("blocked");
+    const maintenanceStart = dateIn(60);
+    await page.getByLabel("Start date (Philippine date)").fill(maintenanceStart);
+    await page.getByLabel("End date (optional)").fill(dateIn(65));
+    await page.getByLabel("Private note (optional)").fill("Test maintenance block");
+    await page.getByRole("button", { name: "Save availability", exact: true }).click();
+    await expect(page.locator("#availability form.auth-form .form-message")).toContainText(
+      "Maintenance block saved",
+    );
+    const maintenance = page.locator("article.account-card").filter({
+      hasText: "Test maintenance block",
+    });
+    await expect(maintenance).toContainText("blocked");
+    await confirmAction(page, "Cancel future block");
+    await expect(
+      page.locator("article.account-card").filter({ hasText: "Test maintenance block" }),
+    ).toHaveCount(0);
+
     const crossOrigin = await page.request.post("/api/photos", {
       headers: { Origin: "https://attacker.example" },
       data: "ignored",

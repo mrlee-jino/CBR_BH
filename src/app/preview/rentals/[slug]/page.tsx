@@ -95,7 +95,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
             <div className="sample-notice">
               <Info size={19} aria-hidden="true" />
               <p>
-                This is a fictional property for exploring PuyoHub. No owner, verification, or live
+                This is a fictional property for exploring Cabahay. No owner, verification, or live
                 availability is represented.
               </p>
             </div>

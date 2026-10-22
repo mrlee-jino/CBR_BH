@@ -25,7 +25,7 @@ export async function DashboardShell({
             className="button button-outline"
             pendingLabel="Signing out…"
             confirmation={{
-              title: "Sign out of PuyoHub?",
+              title: "Sign out of Cabahay?",
               description:
                 "You’ll need to sign in again to manage properties and requests. Unsaved changes on this page will be lost.",
               confirmLabel: "Sign out",

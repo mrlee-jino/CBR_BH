@@ -5,7 +5,7 @@ test("landing search carries the chosen area and type to results", async ({ page
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Find your space.");
   await expect(
-    page.locator(".preview-banner").getByRole("link", { name: "About PuyoHub", exact: true }),
+    page.locator(".preview-banner").getByRole("link", { name: "About Cabahay", exact: true }),
   ).toBeVisible();
   await page.getByLabel("Where do you want to live?").selectOption("Caasinan");
   await page.getByLabel("Your kind of space").selectOption("private-room");
@@ -145,6 +145,9 @@ test("navigation and the skip link work at the selected viewport", async ({ page
 });
 
 test("core pages and the request dialog pass automated accessibility checks", async ({ page }) => {
+  // Measure the settled page rather than a partially transparent entry frame.
+  // Motion itself is covered separately by interaction.spec.ts.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   for (const route of [
     "/",
     "/preview/rentals",

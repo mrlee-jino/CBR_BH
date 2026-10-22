@@ -22,17 +22,17 @@ export function SiteHeader() {
             <span className="status-dot" /> Monthly rentals, rooted in Cabadbaran.
           </span>
           <Link href="/preview">
-            About PuyoHub <ArrowUpRight size={13} aria-hidden="true" />
+            About Cabahay <ArrowUpRight size={13} aria-hidden="true" />
           </Link>
         </div>
       </div>
       <header className="site-header">
         <div className="container header-content">
-          <Link href="/" className="brand" aria-label="PuyoHub home">
+          <Link href="/" className="brand" aria-label="Cabahay home">
             <span className="brand-icon">
               <House size={23} strokeWidth={1.8} aria-hidden="true" />
             </span>
-            Puyo<span className="brand-light">Hub</span>
+            Cabahay
             <span className="brand-period">.</span>
           </Link>
           <nav className="desktop-nav" aria-label="Main navigation">

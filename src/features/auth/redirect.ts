@@ -8,7 +8,7 @@ export function safeNext(value: unknown) {
     value.split("/").includes("..")
   )
     return "/dashboard";
-  const url = new URL(value, "https://puyohub.invalid");
+  const url = new URL(value, "https://cabahay.invalid");
   const basic =
     /^\/(dashboard(?:\/(?:settings|security|requests))?|owner(?:\/requests)?|admin|become-an-owner|reset-password)$/;
   if (basic.test(url.pathname) && !url.search) return url.pathname;

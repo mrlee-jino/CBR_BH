@@ -5,7 +5,7 @@ export const metadata = { title: "Add a property" };
 export default async function NewProperty() {
   await requireRole("owner");
   return (
-    <DashboardShell title="A new home on PuyoHub.">
+    <DashboardShell title="A new home on Cabahay.">
       <div className="account-card">
         <h2>Start with the property.</h2>
         <p>

@@ -81,7 +81,7 @@ test("signup, email confirmation, profile, owner activation, logout and recovery
   await expect(page).toHaveURL(/\/dashboard$/);
   const signout = page.getByRole("button", { name: "Sign out", exact: true });
   await signout.click();
-  const dialog = page.getByRole("dialog", { name: "Sign out of PuyoHub?" });
+  const dialog = page.getByRole("dialog", { name: "Sign out of Cabahay?" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Cancel", exact: true })).toBeFocused();
   expect(
@@ -157,6 +157,8 @@ test("property owner signup guides verified users into owner setup without grant
 });
 
 test("auth forms remain accessible on desktop and mobile", async ({ page }) => {
+  // Measure final contrast rather than the page-entry animation's translucent frame.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   for (const route of [
     "/login",
     "/signup",
@@ -240,5 +242,10 @@ test("an unverified account can request and use a fresh confirmation email", asy
   ).toBeVisible();
   await page.goto(await emailLink(email));
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByText("Your email is verified.", { exact: false })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome,");
+  await expect(
+    page
+      .getByRole("navigation", { name: "Account navigation" })
+      .getByRole("link", { name: "My requests", exact: true }),
+  ).toBeVisible();
 });

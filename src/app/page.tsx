@@ -76,7 +76,7 @@ export default async function Home() {
               </svg>
             </h1>
             <p>
-              A place for your first semester. Your new job.
+              A place to stay. The freedom to belong.
               <br className="desktop-only" /> Your everyday life. Let’s find where you belong.
             </p>
             <div className="hero-local">
@@ -125,7 +125,7 @@ export default async function Home() {
                 <Sprout size={14} aria-hidden="true" /> Built with local living in mind
               </span>
               <Link href="/preview">
-                About PuyoHub <ArrowUpRight size={13} aria-hidden="true" />
+                About Cabahay <ArrowUpRight size={13} aria-hidden="true" />
               </Link>
             </div>
           </div>

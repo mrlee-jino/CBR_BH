@@ -26,7 +26,7 @@ export function SecurityForm({ factorId, verified }: { factorId?: string; verifi
         await supabase.auth.mfa.unenroll({ factorId: factor.id });
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: "totp",
-        friendlyName: "PuyoHub authenticator",
+        friendlyName: "Cabahay authenticator",
       });
       if (error) throw error;
       setEnrollment({ id: data.id, qr: data.totp.qr_code, secret: data.totp.secret });
